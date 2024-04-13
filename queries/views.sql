@@ -40,6 +40,3 @@ LEFT JOIN suppliers sup ON sup.supplier_id = ing_supp.supplier_id;
 
 
 
-
-
-

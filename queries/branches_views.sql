@@ -81,3 +81,4 @@ CREATE OR REPLACE VIEW vw_branch_price_changes(
     LEFT JOIN employees emp ON emp.employee_id = ch.item_cost_changed_by
     LEFT JOIN menu_items it ON it.item_id = ch.item_id;
 
+
