@@ -242,3 +242,51 @@ BEGIN
 END;
 $$;
 
+-- Function to add seasons which resturant serve a meals in them
+-- SELECT * FROM fn_add_season('Ramadan', 'During Ramadan, restaurants adapt their menus to offer iftar buffets and suhoor menus, providing a wide variety of traditional dishes to accommodate fasting individuals and promote communal dining experiences.')
+CREATE OR REPLACE FUNCTION fn_add_season(
+	fn_season_name VARCHAR(35),
+	fn_season_description VARCHAR(254)
+)
+RETURNS VOID
+LANGUAGE PLPGSQL
+AS $$
+BEGIN
+	PERFORM 1 FROM seasons
+	WHERE season_name = fn_season_name;
+	IF FOUND THEN
+		RAISE EXCEPTION 'Season already exist';
+	ELSE
+		INSERT INTO seasons(season_name, season_description)
+		VALUES (fn_season_name, fn_season_description);
+		RAISE NOTICE 'Season added';
+	END IF;
+END;
+$$;
+
+
+-- Function to add item to specific season
+-- SELECT * FROM fn_add_item_time(1,1);
+CREATE OR REPLACE FUNCTION fn_add_item_time(
+	fn_item_id INT,
+	fn_season_id INT
+)
+RETURNS VOID
+LANGUAGE PLPGSQL
+AS $$
+BEGIN
+	PERFORM 1 FROM menu_items WHERE item_id = fn_item_id;
+	IF NOT FOUND THEN 
+		RAISE EXCEPTION 'Item not found in menu';
+	ELSE
+		PERFORM 1 FROM items_seasons 
+		WHERE fn_season_id = season_id AND item_id = fn_item_id;
+		IF FOUND THEN
+			RAISE EXCEPTION 'Item spicified to this season before';
+		ELSE
+			INSERT INTO items_seasons(season_id, item_id)
+			VALUES(fn_season_id, fn_item_id);
+		END IF;
+	END IF;
+END;
+$$;

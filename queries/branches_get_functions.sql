@@ -76,6 +76,33 @@ BEGIN
 END;
 $$;
 
+-- Function to get branch menu by item time
+-- SELECT * FROM fn_get_branch_menu_by_time(2,'lunch');
+CREATE OR REPLACE FUNCTION fn_get_branch_menu_by_time(
+    fn_branch_id INT,
+    fn_time_type item_day_type
+)
+RETURNS TABLE(
+    id INT,
+    Item VARCHAR(35),
+    item_status menu_item_type,
+    item_discount NUMERIC(4, 2),
+    item_price NUMERIC(10, 2),
+    preparation_time INTERVAL,
+    category VARCHAR(35)
+)
+LANGUAGE PLPGSQL
+AS $$
+BEGIN
+    RETURN QUERY
+        SELECT * FROM fn_get_branch_menu(fn_branch_id) menu
+        WHERE menu.id IN (
+            SELECT item_id FROM items_type_day_time 
+            WHERE item_type = fn_time_type
+        );
+END;
+$$;
+
 -- Function to get price or discount changes of item in all branches 
 -- SELECT * FROM fn_get_item_price_changes(1);
 CREATE OR REPLACE FUNCTION fn_get_item_price_changes(
@@ -189,3 +216,6 @@ BEGIN
     END IF; 
 END;
 $$;
+
+
+
