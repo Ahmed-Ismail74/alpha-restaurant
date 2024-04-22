@@ -69,7 +69,7 @@ BEGIN
 		END IF;
 		
 		IF NOT EXISTS (SELECT 1 FROM employees_position WHERE position_id = f_position_id) THEN
-		RETURN 'employee added but position not existed';
+			RETURN 'employee added but position not existed';
 		ELSE
 			INSERT INTO employees_position(employee_id, position_id)
 			VALUES(f_employee_id, f_position_id);

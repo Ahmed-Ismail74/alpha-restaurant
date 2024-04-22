@@ -125,13 +125,6 @@ CREATE TABLE IF NOT EXISTS customers(
 	customer_birthdate DATE
 );
 
-CREATE TABLE IF NOT EXISTS customers_accounts(
-	account_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-	customer_id INT REFERENCES customers ON DELETE RESTRICT ON UPDATE CASCADE NOT NULL,
-	customer_email varchar(254) NOT NULL UNIQUE,
-	customer_password varchar(60) NOT NULL,
-	account_created_date TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
 CREATE TABLE IF NOT EXISTS  customers_addresses_list(
 	address_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 	customer_id INT REFERENCES customers ON DELETE RESTRICT ON UPDATE CASCADE NOT NULL,
@@ -143,6 +136,15 @@ CREATE TABLE IF NOT EXISTS  customers_phones_list(
 	customer_phone_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 	customer_id INT REFERENCES customers ON DELETE RESTRICT ON UPDATE CASCADE NOT NULL,
 	customer_phone VARCHAR(15) NOT NULL CHECK (customer_phone ~ '^[0-9]+$')	
+);
+
+
+CREATE TABLE IF NOT EXISTS customers_accounts(
+	account_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+	customer_id INT REFERENCES customers ON DELETE RESTRICT ON UPDATE CASCADE NOT NULL,
+	customer_phone_id INT REFERENCES customers_phones_list ON DELETE RESTRICT ON UPDATE CASCADE NOT NULL,
+	customer_password varchar(60) NOT NULL,
+	account_created_date TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS  friendships(
@@ -228,6 +230,7 @@ CREATE TABLE IF NOT EXISTS  branch_sections(
 );
 -- create Index
 
+
 CREATE TABLE IF NOT EXISTS  branch_tables(
 	branch_id INT REFERENCES branches ON DELETE RESTRICT ON UPDATE CASCADE NOT NULL,
 	table_id INT NOT NULL ,
@@ -235,6 +238,7 @@ CREATE TABLE IF NOT EXISTS  branch_tables(
 	capacity SMALLINT CHECK (capacity >= 0) NOT NULL,
 	PRIMARY KEY (branch_id, table_id)
 );
+
 -- create Index
 
 CREATE TABLE IF NOT EXISTS  branches_stock(

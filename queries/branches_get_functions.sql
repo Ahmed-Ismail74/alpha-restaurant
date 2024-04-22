@@ -48,7 +48,7 @@ $$;
 
 
 -- function to get all menu of specific branch
--- SELECT * FROM fn_get_branch_menu(2)
+-- SELECT * FROM fn_get_branch_menu(5)
 CREATE OR REPLACE FUNCTION fn_get_branch_menu(fn_branch_id INT)
 RETURNS TABLE(
     id INT,
@@ -104,7 +104,7 @@ END;
 $$;
 
 -- Function to get price or discount changes of item in all branches 
--- SELECT * FROM fn_get_item_price_changes(1);
+-- SELECT * FROM fn_get_item_price_changes(100);
 CREATE OR REPLACE FUNCTION fn_get_item_price_changes(
     fn_item_id INT
 )
@@ -122,7 +122,9 @@ BEGIN
     PERFORM 1 FROM menu_items 
     WHERE item_id = fn_item_id;
     IF NOT FOUND THEN
-        RAISE EXCEPTION 'item not found';
+        RAISE EXCEPTION SQLSTATE '23503' 
+        USING MESSAGE = 'Item not found', 
+        HINT = 'try to list items and get id of one of them';
     ELSE
         RETURN QUERY
             SELECT vw.id, vw.branch, vw.changed_by, vw.change_type, vw.new_value, vw.previous_value
@@ -135,7 +137,7 @@ $$;
 
 
 -- Function to get price or discount changes of all menu in one branch  
--- SELECT * FROM fn_get_branch_item_price_changes(1);
+-- SELECT * FROM fn_get_branch_item_price_changes(200);
 CREATE OR REPLACE FUNCTION fn_get_branch_item_price_changes(
     fn_branch_id INT
 )
@@ -151,9 +153,11 @@ LANGUAGE PLPGSQL
 AS $$
 BEGIN
     PERFORM 1 FROM branches 
-    WHERE fn_branch_id = fn_branch_id;
+    WHERE branch_id = fn_branch_id;
     IF NOT FOUND THEN
-        RAISE EXCEPTION 'branch not found';
+        RAISE EXCEPTION SQLSTATE '23503' 
+        USING MESSAGE = 'Branch not found', 
+        HINT = 'try to list branches and get id of one of them';
     ELSE
         RETURN QUERY
             SELECT vw.id, vw.item, vw.changed_by, vw.change_type, vw.new_value, vw.previous_value
