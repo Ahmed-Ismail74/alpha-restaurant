@@ -53,5 +53,3 @@ BEGIN
     -- END IF;
 END
 $$;
-
-DROP TYPE order_type;

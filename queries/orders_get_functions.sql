@@ -37,7 +37,92 @@ END;
 $$;
 
 
+CREATE OR REPLACE FUNCTION fn_get_customer_bookings(
+    fn_customer_id INT
+)
+RETURNS TABLE(
+    booking_id INT ,
+	customer_id INT ,
+	table_id INT ,
+	branch_id INT ,
+	booking_date TIMESTAMPTZ ,
+	booking_start_time TIMESTAMPTZ  ,
+	booking_end_time TIMESTAMPTZ  ,
+	booking_status order_status_type
+)
+LANGUAGE PLPGSQL 
+AS $$
+BEGIN
+    PERFORM 1 FROM customers cus WHERE cus.customer_id = fn_customer_id;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Customer not exist';
+    ELSE
+        RETURN QUERY
+            SELECT * FROM bookings bo WHERE bo.customer_id = fn_customer_id;
+    END IF;
+END;
+$$;
 
+
+
+
+CREATE OR REPLACE FUNCTION fn_get_branch_bookings(
+    fn_branch_id INT
+)
+RETURNS TABLE(
+    booking_id INT ,
+	customer_id INT ,
+	table_id INT ,
+	branch_id INT ,
+	booking_date TIMESTAMPTZ ,
+	booking_start_time TIMESTAMPTZ  ,
+	booking_end_time TIMESTAMPTZ  ,
+	booking_status order_status_type
+)
+LANGUAGE PLPGSQL 
+AS $$
+BEGIN
+    PERFORM 1 FROM branches br WHERE br.branch_id = fn_branch_id;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Branch not exist';
+    ELSE
+        RETURN QUERY
+            SELECT * FROM bookings bo WHERE bo.branch_id = fn_branch_id;
+    END IF;
+END;
+$$;
+
+
+
+-- SELECT * FROM fn_get_bookings_by_status(1,'confirmed');
+-- 'pending', 'confirmed', 'cancelled', 'completed'
+CREATE OR REPLACE FUNCTION fn_get_bookings_by_status(
+    fn_branch_id INT,
+    fn_booking_status order_status_type
+)
+RETURNS TABLE(
+    booking_id INT ,
+	customer_id INT ,
+	table_id INT ,
+	branch_id INT ,
+	booking_date TIMESTAMPTZ ,
+	booking_start_time TIMESTAMPTZ  ,
+	booking_end_time TIMESTAMPTZ  ,
+	booking_status order_status_type
+)
+LANGUAGE PLPGSQL 
+AS $$
+BEGIN
+    PERFORM 1 FROM branches br WHERE br.branch_id = fn_branch_id;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Branch not exist';
+    ELSE
+        RETURN QUERY
+            SELECT * FROM bookings bo 
+            WHERE bo.branch_id = fn_branch_id AND bo.booking_status = fn_booking_status;
+    END IF;
+END;
+$$;
 
 
 -- SELECT * FROM fn_get_customer_orders(2,2);

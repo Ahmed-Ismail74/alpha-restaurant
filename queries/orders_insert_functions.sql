@@ -143,7 +143,6 @@ $$;
 --     pr_address_id := 4,
 --     pr_customer_phone_id := 2
 -- );
-SELECT * FROM customers
 CREATE OR REPLACE PROCEDURE add_virtual_order(
     -- order main info
     pr_customer_id INT,
@@ -157,10 +156,10 @@ CREATE OR REPLACE PROCEDURE add_virtual_order(
     -- optional parameters
     pr_additional_discount NUMERIC(4,2) DEFAULT 0,
     -- credit_details if exist
-    pr_credit_card_number varchar(16) DEFAULT NULL,
-	pr_credit_card_exper_month SMALLINT DEFAULT NULL,
-	pr_credit_card_exper_day SMALLINT DEFAULT NULL,
-	pr_name_on_card VARCHAR(35) DEFAULT NULL,
+    -- pr_credit_card_number varchar(16) DEFAULT NULL,
+	-- pr_credit_card_exper_month SMALLINT DEFAULT NULL,
+	-- pr_credit_card_exper_day SMALLINT DEFAULT NULL,
+	-- pr_name_on_card VARCHAR(35) DEFAULT NULL,
     -- lounge details if offline order in branch
     pr_table_id INT DEFAULT NULL,
     -- order connectiong info if delivery order
@@ -252,4 +251,73 @@ BEGIN
 END;
 $$;
 
+-- add table booking 
+-- CALL pr_add_booking(2,20,1,'2024-05-21 08:00:00', '2024-05-21 12:00:00')
+CREATE OR REPLACE PROCEDURE pr_add_booking(
+    pr_customer_id INT ,
+	pr_table_id INT ,
+	pr_branch_id INT ,
+	pr_booking_start_time TIMESTAMPTZ ,
+	pr_booking_end_time TIMESTAMPTZ ,
+	pr_booking_status order_status_type DEFAULT 'pending'
+)
+LANGUAGE PLPGSQL 
+AS $$
+BEGIN
+    PERFORM 1 FROM customers WHERE customer_id = pr_customer_id;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Customer not exist';
+    ELSE
+        PERFORM 1 FROM branch_tables 
+        WHERE table_id = pr_table_id AND branch_id = pr_branch_id ;
+        IF NOT FOUND THEN
+            RAISE EXCEPTION 'Table not exist';
+        ELSE
+            INSERT INTO bookings(
+                customer_id,
+                table_id ,
+                branch_id ,
+                booking_start_time ,
+                booking_end_time ,
+                booking_status
+            ) VALUES (
+                pr_customer_id ,
+                pr_table_id ,
+                pr_branch_id ,
+                pr_booking_start_time ,
+                pr_booking_end_time ,
+                pr_booking_status
+            );
+        END IF;
+    END IF;
+END;
+$$;
 
+
+
+CREATE OR REPLACE PROCEDURE pr_add_order_to_booking(
+    pr_booking_id INT,
+    pr_order_id INT
+)
+LANGUAGE PLPGSQL
+AS $$
+BEGIN
+    PERFORM 1 FROM bookings WHERE booking_id = pr_booking_id;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Booking not exist';
+    ELSE
+        PERFORM 1 FROM orders WHERE order_id = pr_order_id;
+        IF NOT FOUND THEN
+            RAISE EXCEPTION 'Order not exist';
+        ELSE
+            INSERT INTO bookings_orders (
+                booking_id,
+                order_id
+            ) VALUES (
+                pr_booking_id,
+                pr_order_id
+            );
+        END IF;
+    END IF;
+END;
+$$;
