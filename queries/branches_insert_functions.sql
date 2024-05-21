@@ -154,6 +154,7 @@ END;
 $$;
 
 -- Procedure to add an item to a branch menu
+call pr_add_item_branch_menu(1,33,200)
 CREATE OR REPLACE PROCEDURE pr_add_item_branch_menu(
 	p_branch_id INT ,
 	p_item_id INT,
@@ -189,13 +190,13 @@ $$;
 
 -- FUNCTION to recipes of menu item
 -- SELECT * FROM fn_add_recipes(2, 1, 5, 'optional');
-CREATE OR REPLACE FUNCTION fn_add_recipes(
+
+CREATE OR REPLACE PROCEDURE pr_add_recipes(
 	p_item_id INT,
 	p_ingredient_id INT,
 	p_quantity NUMERIC(5, 3) ,
 	p_recipe_status recipe_type DEFAULT 'required'
 )
-RETURNS VOID
 LANGUAGE PLPGSQL
 AS $$
 BEGIN
@@ -213,7 +214,9 @@ BEGIN
 END;
 $$;
 
-
+SELECT setting
+FROM pg_settings
+WHERE name = 'client_min_messages';
 
 -- Function to add item time type breakfast, lunch, ....
 -- SELECT * FROM fn_add_item_time(1,'lunch');
@@ -267,7 +270,7 @@ $$;
 
 -- Function to add item to specific season
 -- SELECT * FROM fn_add_item_time(1,1);
-CREATE OR REPLACE FUNCTION fn_add_item_time(
+CREATE OR REPLACE FUNCTION fn_add_item_season(
 	fn_item_id INT,
 	fn_season_id INT
 )

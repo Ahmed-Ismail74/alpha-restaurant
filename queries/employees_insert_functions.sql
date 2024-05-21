@@ -68,7 +68,7 @@ BEGIN
 			VALUES (f_employee_id, f_branch_id, f_section_id);
 		END IF;
 		
-		IF NOT EXISTS (SELECT 1 FROM employees_position WHERE position_id = f_position_id) THEN
+		IF NOT EXISTS (SELECT 1 FROM positions WHERE position_id = f_position_id) THEN
 			RETURN 'employee added but position not existed';
 		ELSE
 			INSERT INTO employees_position(employee_id, position_id)
@@ -124,7 +124,7 @@ LANGUAGE PLPGSQL
 AS
 $$
 BEGIN
-	SELECT employee_id FROM employees WHERE employee_id = fn_employee_id;
+	Perform 1 FROM employees WHERE employee_id = fn_employee_id;
 	IF FOUND THEN
 		INSERT INTO employee_vacations(employee_id, vacation_start_date, vacation_end_date, vacation_reason)
 		VALUES (fn_employee_id, fn_vacation_start_date, fn_vacation_end_date, fn_vacation_reason);
@@ -148,7 +148,7 @@ LANGUAGE PLPGSQL
 AS
 $$
 BEGIN
-	PERFORM employee_id FROM employees WHERE employee_id = fn_employee_id;
+	PERFORM 1 FROM employees WHERE employee_id = fn_employee_id;
 	IF FOUND THEN
 		INSERT INTO employee_schedule(employee_id, shift_start_time, shift_end_time)
 		VALUES (fn_employee_id, fn_shift_start_time, fn_shift_end_time);
@@ -168,7 +168,7 @@ RETURNS VARCHAR
 LANGUAGE PLPGSQL
 AS $$
 BEGIN
-	PERFORM employee_id FROM employees WHERE employee_id = fn_employee_id;
+	PERFORM 1 FROM employees WHERE employee_id = fn_employee_id;
 	IF NOT FOUND THEN
 		RETURN 'Employee Not found';
 	ELSE
@@ -196,7 +196,7 @@ RETURNS VOID
 LANGUAGE PLPGSQL
 AS $$
 BEGIN
-	PERFORM employee_id FROM employees WHERE employee_id = fn_employee_id;
+	PERFORM 1 FROM employees WHERE employee_id = fn_employee_id;
 	IF NOT FOUND THEN
 		RAISE EXCEPTION 'Employee not found';
 	ELSE
@@ -224,7 +224,7 @@ RETURNS VOID
 LANGUAGE PLPGSQL
 AS $$
 BEGIN
-	PERFORM employee_id FROM employees WHERE employee_id = fn_employee_id;
+	PERFORM 1 FROM employees WHERE employee_id = fn_employee_id;
 	IF NOT FOUND THEN
 		RAISE EXCEPTION 'Employee not found';
 	ELSE
@@ -240,8 +240,6 @@ BEGIN
 	END IF;
 END;
 $$;
-
-
 
 
 

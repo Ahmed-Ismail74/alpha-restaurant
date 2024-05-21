@@ -147,20 +147,23 @@ CREATE TABLE IF NOT EXISTS customers_accounts(
 	account_created_date TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS  friendships(
-	friendship_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-	account_id INT REFERENCES customers_accounts(account_id) NOT NULL,
-	friend_account_id	INT REFERENCES customers_accounts(account_id) NOT NULL
-);
-
 CREATE TABLE IF NOT EXISTS  friends_requests(
 	friendship_request_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 	sender_account_id INT REFERENCES customers_accounts (account_id) ON DELETE RESTRICT ON UPDATE CASCADE NOT NULL,
 	receiver_account_id INT REFERENCES customers_accounts (account_id) ON DELETE RESTRICT ON UPDATE CASCADE NOT NULL,
 	request_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-	friend_request_status friend_request_type ,
-	request_reply_time TIMESTAMP
+	friend_request_status friend_request_type DEFAULT 'pending' ,
+	request_reply_time TIMESTAMP DEFAULT NULL
 );
+
+CREATE TABLE IF NOT EXISTS  friendships(
+	friendship_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+	account_id_sender INT REFERENCES customers_accounts(account_id) NOT NULL,
+	account_id_receiver	INT REFERENCES customers_accounts(account_id) NOT NULL,
+	friendship_request_id INT REFERENCES friends_requests NOT NULL,
+	since TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
 
 
 
@@ -269,10 +272,9 @@ CREATE TABLE IF NOT EXISTS  items_price_changes(
 	item_id INT REFERENCES menu_items ON DELETE RESTRICT ON UPDATE CASCADE NOT NULl,
 	item_cost_changed_by INT REFERENCES employees(employee_id) NOT NULL,
 	change_type varchar(10) CHECK (change_type IN ('discount','price')),
-	new_value NUMERIC(10, 2) CHECK (new_value > 0) NOT NULL,
-	previous_value NUMERIC(10, 2) CHECK (previous_value > 0) NOT NULL
+	new_value NUMERIC(10, 2) CHECK (new_value >= 0) NOT NULL,
+	previous_value NUMERIC(10, 2) CHECK (previous_value >= 0) NOT NULL
 );
-
 
 CREATE TABLE IF NOT EXISTS  seasons(
 	season_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
@@ -390,18 +392,19 @@ CREATE TABLE IF NOT EXISTS  shipments_details(
 );
 -- orders Tables
 
-CREATE TABLE IF NOT EXISTS  orders(
+CREATE TABLE IF NOT EXISTS orders(
 	order_id  INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 	customer_id  INT REFERENCES customers ON DELETE RESTRICT ON UPDATE CASCADE NOT NULL,
 	branch_id INT REFERENCES branches ON DELETE RESTRICT ON UPDATE CASCADE NOT NULL,
 	order_date TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-	ship_date TIMESTAMPTZ,
+	ship_date TIMESTAMPTZ DEFAULT NULL,
 	order_type order_type NOT NULL,
-	order_staus order_status_type NOT NULL,
+	order_status order_status_type NOT NULL,
 	order_total_price NUMERIC(10,2) CHECK (order_total_price > 0) NOT NULL,
-	order_customer_discount NUMERIC(4,2) CHECK (order_customer_discount > 0) DEFAULT 0 NOT NULL,
+	order_customer_discount NUMERIC(4,2) CHECK (order_customer_discount >= 0) DEFAULT 0 NOT NULL,
 	order_payment_method payment_method_type NOT NULL
 );
+
 CREATE TABLE IF NOT EXISTS orders_connecting_details(
 	order_id INT REFERENCES orders ON DELETE RESTRICT ON UPDATE CASCADE NOT NULL,
 	address_id INT REFERENCES customers_addresses_list ON DELETE RESTRICT ON UPDATE CASCADE NOT NULL,
@@ -417,7 +420,7 @@ CREATE TABLE IF NOT EXISTS  orders_credit_details(
 	PRIMARY KEY (order_id)
 	
 );
-
+-- oreders that are form virtual room or single order from one person
 CREATE TABLE IF NOT EXISTS  virtual_orders_items(
 	order_id  INT REFERENCES orders ON DELETE RESTRICT ON UPDATE CASCADE NOT NULL,
 	customer_id  INT REFERENCES customers ON DELETE RESTRICT ON UPDATE CASCADE NOT NULL,
@@ -428,8 +431,7 @@ CREATE TABLE IF NOT EXISTS  virtual_orders_items(
 );
 
 -- create Index
-
-CREATE TABLE IF NOT EXISTS  offline_orders_items(
+CREATE TABLE IF NOT EXISTS  non_virtual_orders_items(
 	order_id  INT REFERENCES orders ON DELETE RESTRICT ON UPDATE CASCADE NOT NULL,
 	item_id INT REFERENCES menu_items ON DELETE RESTRICT ON UPDATE CASCADE NOT NULL,
 	quantity SMALLINT CHECK (quantity > 0) NOT NULL,

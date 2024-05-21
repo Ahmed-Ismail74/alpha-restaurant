@@ -64,7 +64,7 @@ LANGUAGE PLPGSQL
 AS 
 $$
 BEGIN
-	SELECT employee_id FROM employees WHERE employee_id = fn_employee_id;
+	PERFORM 1 FROM employees WHERE employee_id = fn_employee_id;
 	IF FOUND THEN
 		UPDATE employees 
 		SET employee_address = fn_employee_address
@@ -76,28 +76,31 @@ BEGIN
 END;
 $$;
 
-
-CREATE OR REPLACE FUNCTION fn_update_employee_phone(
-	fn_employee_id INT,
-	fn_employees_phone VARCHAR(15)
+SELECT * FROM employees_call_list;
+CREATE OR REPLACE PROCEDURE pr_update_employee_phone(
+	pr_employee_id INT,
+	pr_employees_phone VARCHAR(15),
+	pr_new_phone VARCHAR(15)
 )
-RETURNS VARCHAR
 LANGUAGE PLPGSQL
 AS 
 $$
 BEGIN
-	SELECT employee_id FROM employees WHERE employee_id = fn_employee_id;
+	PERFORM 1 FROM employees WHERE employee_id = pr_employee_id;
 	IF FOUND THEN
-		IF fn_employees_phone IN (SELECT employees_phone FROM employees_call_list WHERE employee_id = fn_employee_id) THEN
+		PERFORM 1 employee_phone FROM employees_call_list 
+		WHERE employee_id = pr_employee_id
+		AND employee_phone = pr_employees_phone;
+		IF FOUND THEN
 			UPDATE employees_call_list 
-			SET employees_phone = fn_employees_phone
-			WHERE employee_id = fn_employee_id;
-			RETURN 'phone changed';
+			SET employee_phone = pr_new_phone
+			WHERE employee_id = pr_employee_id AND employee_phone = pr_employees_phone;
+			RAISE NOTICE 'phone changed';
 		ELSE
-			RETURN 'Phone not existed';
+			RAISE EXCEPTION 'Phone not existed';
 		END IF;
 	ELSE
-		RETURN 'employee not found';
+		RAISE EXCEPTION 'employee not found';
 	END IF;
 END;
 $$;
@@ -117,7 +120,7 @@ $$
 DECLARE
 	fn_old_branch_id INT;
 BEGIN
-	SELECT employee_id FROM employees WHERE employee_id = fn_employee_id;
+	PERFORM 1 FROM employees WHERE employee_id = fn_employee_id;
 	IF FOUND THEN
 		SELECT branch_id FROM branches WHERE fn_new_branch_id = branch_id;
 		IF FOUND THEN

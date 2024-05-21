@@ -1,6 +1,9 @@
 -- function to get tables of specific branch 
 -- SELECT * FROM fn_get_branch_tables(1);
-CREATE OR REPLACE FUNCTION fn_get_branch_tables(fn_branch_id INT)
+CREATE OR REPLACE FUNCTION fn_get_branch_tables(
+    fn_branch_id INT,
+    fn_table_status table_status_type DEFAULT NULL
+    )
 RETURNS TABLE(
     table_id INT,
     table_status table_status_type,
@@ -13,13 +16,18 @@ BEGIN
     IF NOT FOUND THEN
         RAISE EXCEPTION 'Branch not found';
     ELSE
-        RETURN QUERY
-            SELECT tab.table_id, tab.table_status, tab.capacity FROM branch_tables tab
-            WHERE branch_id = fn_branch_id;
+        IF fn_table_status IS NULL THEN 
+            RETURN QUERY
+                SELECT tab.table_id, tab.table_status, tab.capacity FROM branch_tables tab
+                WHERE branch_id = fn_branch_id;
+        ELSE
+            RETURN QUERY
+                SELECT tab.table_id, tab.table_status, tab.capacity FROM branch_tables tab
+                WHERE branch_id = fn_branch_id AND tab.table_status = fn_table_status;
+        END IF;
     END IF;
 END;
 $$;
-
 
 -- get recipes of specific item 
 -- SELECT * FROM fn_get_item_recipes(2);

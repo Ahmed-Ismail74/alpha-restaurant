@@ -203,3 +203,35 @@ BEGIN
 	END IF;
 END;
 $$;
+
+
+CREATE OR REPLACE FUNCTION fn_emp_login(
+	fn_employee_email varchar(254)
+)
+RETURNS VARCHAR
+LANGUAGE PLPGSQL
+AS$$
+BEGIN
+	
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION fn_get_employee_hash(
+	fn_employee_email varchar(254)
+)
+RETURNS VARCHAR
+LANGUAGE plpgsql
+AS $$
+BEGIN
+	PERFORM 1 FROM employees_accounts
+	WHERE employee_email = fn_employee_email;
+	IF NOT FOUND THEN
+		RAISE EXCEPTION 'Email not Exist';
+	ELSE
+		RETURN (
+			SELECT employee_password FROM employees_accounts
+			WHERE employee_email = fn_employee_email
+			);
+	END IF;
+END;
+$$;

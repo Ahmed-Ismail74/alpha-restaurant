@@ -1,13 +1,13 @@
 -- change price or discount of item in branch menu
 -- SELECT * FROM fn_change_item_price(1,1,1, 'discount', 30);
-CREATE OR REPLACE FUNCTION fn_change_item_price(
+
+CREATE OR REPLACE PROCEDURE pr_change_item_price(
     fn_item_id INT,
     fn_branch_id INT,
     fn_changer INT,
     fn_change_type varchar(10),
     fn_new_value NUMERIC(10, 2)
 )
-RETURNS VOID
 LANGUAGE PLPGSQL
 AS $$
 DECLARE 

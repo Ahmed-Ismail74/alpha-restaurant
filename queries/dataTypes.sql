@@ -38,7 +38,7 @@ BEGIN
     END IF;
 	
 	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'order_type') THEN
-        CREATE TYPE order_type AS ENUM ('delivey','dine-in','take away');
+        CREATE TYPE order_type AS ENUM ('delivery','dine-in','take away');
     END IF;
 	
 	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'payment_method_type') THEN
@@ -48,5 +48,10 @@ BEGIN
 	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'item_day_type') THEN
         CREATE TYPE item_day_type AS ENUM ('breakfast','lunch','dinner', 'brunch', 'supper', 'midnight snack');
     END IF;
+    -- IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'roles_type') THEN
+    --     CREATE TYPE roles_type AS ENUM ('manager','hr','operation manager', 'section manager', 'cashier', 'delivery', 'no role');
+    -- END IF;
 END
 $$;
+
+DROP TYPE order_type;

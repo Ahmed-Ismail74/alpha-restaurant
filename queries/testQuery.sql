@@ -75,8 +75,8 @@ CALL pr_add_ingredient_to_branch_stock(2, 2, 30);
 CALL pr_add_category(1, 'salads', 'a wide variety of dishes including: green salads; vegetable salads; long beans; salads of pasta, legumes, or grains; mixed salads incorporating meat, poultry, or seafood; and fruit salads. They often include vegetables and fruits.');
 SELECT * FROM categories;
 ---------------------------------------------------------------------------------------
-CALL pr_menu_item('coleslaw', 'is a side dish consisting primarily of finely shredded raw cabbage[2] with a salad dressing or condiment, commonly either vinaigrette or mayonnaise.', 1, '5 minutes'::interval)
-CALL pr_menu_item('baba ghanoush', 'is a Levantine appetizer consisting of finely chopped roasted eggplant, olive oil, lemon juice, various seasonings, and tahini.', 1, '40 minutes'::interval)
+CALL pr_menu_item('coleslaw', 'is a side dish consisting primarily of finely shredded raw cabbage[2] with a salad dressing or condiment, commonly either vinaigrette or mayonnaise.', 2, '5 minutes'::interval);
+CALL pr_menu_item('baba ghanoush', 'is a Levantine appetizer consisting of finely chopped roasted eggplant, olive oil, lemon juice, various seasonings, and tahini.', 2, '40 minutes'::interval);
 SELECT * FROM menu_items;
 ---------------------------------------------------------------------------------------
 CALL pr_add_item_branch_menu(1, 1, 45);

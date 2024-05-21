@@ -92,15 +92,15 @@ $$;
 
 -- procedure to create customer account if already have customer data
 -- maybe change the data also 
-CALL pr_add_account_to_customer(
-    11,
-    'kareem',
-    'sayed',
-    'm',
-    '01000015545',
-    'ahsjdhajsdhjashdjhasjd',
-    '1sh ali hesssen'
-)
+-- CALL pr_add_account_to_customer(
+--     11,
+--     'kareem',
+--     'sayed',
+--     'm',
+--     '01000015545',
+--     'ahsjdhajsdhjashdjhasjd',
+--     '1sh ali hesssen'
+-- )
 CREATE OR REPLACE PROCEDURE pr_add_account_to_customer(
     fn_cust_id INT,
     fn_cust_first_name VARCHAR(35),
@@ -256,5 +256,97 @@ BEGIN
         END IF;
     END IF;
     RAISE NOTICE USING MESSAGE = 'Customer added successfully';
+END;
+$$;
+
+
+-- function to add address to existed customer
+CREATE OR REPLACE PROCEDURE pr_add_customer_address(
+    pr_cust_id INT,
+    pr_cust_address VARCHAR(95),
+	pr_cust_city VARCHAR(35) DEFAULT NULL,
+	pr_location_coordinates POINT DEFAULT NULL
+)
+LANGUAGE PLPGSQL
+AS $$
+BEGIN
+    PERFORM 1 FROM customers
+    WHERE customer_id = pr_cust_id;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Customer not exist';
+    ELSE
+        INSERT INTO customers_addresses_list(
+            customer_id ,
+            customer_address,
+            customer_city ,
+            location_coordinates 
+        ) VALUES(
+            pr_cust_id ,
+            pr_cust_address ,
+            pr_cust_city ,
+            pr_location_coordinates
+        );
+        RAISE NOTICE 'Address added successfully';
+    END IF;
+END;
+$$;
+
+
+
+-- function to add phone to existed customer
+-- CALL pr_add_customer_phone(2,'017255185884');
+CREATE OR REPLACE PROCEDURE pr_add_customer_phone(
+    pr_cust_id INT,
+    pr_cust_phone VARCHAR(15)
+)
+LANGUAGE PLPGSQL
+AS $$
+BEGIN
+    PERFORM 1 FROM customers
+    WHERE customer_id = pr_cust_id;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Customer not exist';
+    ELSE
+        INSERT INTO customers_phones_list(
+            customer_id ,
+            customer_phone
+        ) VALUES(
+            pr_cust_id ,
+            pr_cust_phone
+        );
+        RAISE NOTICE 'Phone added successfully';
+    END IF;
+END;
+$$;
+-- function to add a friend request using id of accounts not id of customers
+CREATE OR REPLACE PROCEDURE pr_add_friend_request(
+    pr_sender_account_id INT,
+    pr_receiver_account_id INT
+)
+LANGUAGE PLPGSQL
+AS 
+$$
+BEGIN
+    PERFORM 1 FROM customers_accounts
+    WHERE account_id = pr_sender_account_id;
+    
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Sender not exist';
+    ELSE
+        PERFORM 1 FROM customers_accounts
+        WHERE account_id = pr_receiver_account_id;
+        IF NOT FOUND THEN
+            RAISE EXCEPTION 'Receiver not exist';
+        ELSE
+            INSERT INTO friends_requests(
+                sender_account_id,
+                receiver_account_id
+            ) VALUES(
+                pr_sender_account_id,
+                pr_receiver_account_id
+            );
+            RAISE NOTICE 'Request added';
+        END IF;
+    END IF;
 END;
 $$;
