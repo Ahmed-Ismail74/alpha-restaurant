@@ -124,20 +124,22 @@ AS $$
 BEGIN
 	PERFORM 1 FROM branches_stock WHERE branch_id = p_branch_id AND ingredient_id = p_ingredient_id;
 	IF FOUND THEN
-		RETURN;
+		RAISE EXCEPTION 'Ingredient already exist';
 	ELSE
 		INSERT INTO branches_stock(branch_id, ingredient_id, ingredients_quantity)
 		VALUES (p_branch_id, p_ingredient_id, p_ingredients_quantity);
 	END IF;
 END;
 $$;
-
 -- Procedure to add new menu item
-CREATE OR REPLACE PROCEDURE pr_menu_item(
+CREATE OR REPLACE PROCEDURE pr_add_menu_item(
 	p_item_name VARCHAR(35),
 	p_item_description VARCHAR(254),
 	p_category_id INT,
-	p_preparation_time INTERVAL DEFAULT NULL
+	p_preparation_time INTERVAL DEFAULT NULL,
+	p_picture_path varchar(255) DEFAULT NULL,
+	p_vegetarian BOOLEAN DEFAULT FALSE,
+	p_healthy BOOLEAN DEFAULT FALSE
 )
 LANGUAGE PLPGSQL
 AS $$
@@ -146,15 +148,14 @@ BEGIN
 	IF FOUND THEN
 		RAISE EXCEPTION 'Item already exist';
 	ELSE
-		INSERT INTO menu_items(item_name, item_description, category_id, preparation_time)
-		VALUES (p_item_name, P_item_description, p_category_id, p_preparation_time);
+		INSERT INTO menu_items(item_name, item_description, category_id, preparation_time, picture_path, vegetarian, healthy)
+		VALUES (p_item_name, P_item_description, p_category_id, p_preparation_time, p_picture_path, p_vegetarian, p_healthy);
         RAISE NOTICE 'Item added';
 	END IF;
 END;
 $$;
 
 -- Procedure to add an item to a branch menu
-call pr_add_item_branch_menu(1,33,200)
 CREATE OR REPLACE PROCEDURE pr_add_item_branch_menu(
 	p_branch_id INT ,
 	p_item_id INT,

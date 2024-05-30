@@ -65,7 +65,8 @@ RETURNS TABLE(
     item_discount NUMERIC(4, 2),
     item_price NUMERIC(10, 2),
     preparation_time INTERVAL,
-    category VARCHAR(35)
+    category VARCHAR(35),
+    picture_path VARCHAR(255)
 )
 LANGUAGE PLPGSQL
 AS $$
@@ -75,7 +76,7 @@ BEGIN
         RAISE EXCEPTION 'branch not found';
     ELSE
         RETURN QUERY
-            SELECT br.item_id, menu.item_name, br.item_status, br.item_discount, br.item_price, menu.preparation_time, category_name
+            SELECT br.item_id, menu.item_name, br.item_status, br.item_discount, br.item_price, menu.preparation_time, category_name, menu.picture_path
             FROM branches_menu br
             LEFT JOIN menu_items menu ON menu.item_id = br.item_id
             LEFT JOIN categories ON menu.category_id  = categories.category_id
@@ -97,7 +98,8 @@ RETURNS TABLE(
     item_discount NUMERIC(4, 2),
     item_price NUMERIC(10, 2),
     preparation_time INTERVAL,
-    category VARCHAR(35)
+    category VARCHAR(35),
+    picture_path VARCHAR(255)
 )
 LANGUAGE PLPGSQL
 AS $$
@@ -229,5 +231,67 @@ BEGIN
 END;
 $$;
 
+
+
+
+
+
+CREATE OR REPLACE FUNCTION fn_get_branch_bookings(
+    fn_branch_id INT
+)
+RETURNS TABLE(
+    booking_id INT ,
+	customer_id INT ,
+	table_id INT ,
+	branch_id INT ,
+	booking_date TIMESTAMPTZ ,
+	booking_start_time TIMESTAMPTZ  ,
+	booking_end_time TIMESTAMPTZ  ,
+	booking_status order_status_type
+)
+LANGUAGE PLPGSQL 
+AS $$
+BEGIN
+    PERFORM 1 FROM branches br WHERE br.branch_id = fn_branch_id;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Branch not exist';
+    ELSE
+        RETURN QUERY
+            SELECT * FROM bookings bo WHERE bo.branch_id = fn_branch_id;
+    END IF;
+END;
+$$;
+
+
+
+-- SELECT * FROM fn_get_bookings_by_status(1,'confirmed');
+-- 'pending', 'confirmed', 'cancelled', 'completed'
+CREATE OR REPLACE FUNCTION fn_get_bookings_by_status(
+    fn_branch_id INT,
+    fn_booking_status order_status_type
+)
+RETURNS TABLE(
+    booking_id INT ,
+	customer_id INT ,
+	table_id INT ,
+	branch_id INT ,
+	booking_date TIMESTAMPTZ ,
+	booking_start_time TIMESTAMPTZ  ,
+	booking_end_time TIMESTAMPTZ  ,
+	booking_status order_status_type
+)
+LANGUAGE PLPGSQL 
+AS $$
+BEGIN
+    PERFORM 1 FROM branches br WHERE br.branch_id = fn_branch_id;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Branch not exist';
+    ELSE
+        RETURN QUERY
+            SELECT * FROM bookings bo 
+            WHERE bo.branch_id = fn_branch_id AND bo.booking_status = fn_booking_status;
+    END IF;
+END;
+$$;
 
 
