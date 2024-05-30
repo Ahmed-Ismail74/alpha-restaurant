@@ -147,8 +147,8 @@ BEGIN
 END;
 $$;
 
-SELECT * FROM fn_get_friend_requests(4);
-SELECT * FROM friends_requests;
+-- SELECT * FROM fn_get_friend_requests(4);
+-- SELECT * FROM friends_requests;
 CREATE OR REPLACE FUNCTION fn_get_friend_requests(
     fn_acc_id INT
 )
@@ -196,6 +196,40 @@ BEGIN
 		RETURN (
 			SELECT customer_password FROM customers_accounts
 			WHERE customer_phone_id = fn_phone_id
+			);
+	END IF;
+END;
+$$;
+
+
+
+
+CREATE OR REPLACE FUNCTION fn_get_customer_sign_in_info(
+	fn_customer_phone varchar(15)
+)
+RETURNS TABLE(
+    customer_id INT,
+	customer_first_name VARCHAR(35),
+	customer_last_name VARCHAR(35)
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    fn_customer_id INT;
+BEGIN
+	SELECT cust_phone.customer_id INTO fn_customer_id
+    FROM customers_phones_list cust_phone
+	WHERE cust_phone.customer_phone = fn_customer_phone;
+	IF fn_customer_id IS NULL THEN
+		RAISE EXCEPTION 'Customer not Exist';
+	ELSE
+		RETURN QUERY(
+			SELECT 
+            cust.customer_id,
+            cust.customer_first_name,
+            cust.customer_last_name
+            FROM customers cust
+			WHERE cust.customer_id = fn_customer_id
 			);
 	END IF;
 END;

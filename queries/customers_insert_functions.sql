@@ -18,7 +18,8 @@ CREATE OR REPLACE PROCEDURE pr_customer_signup(
     fn_cust_address VARCHAR(95),
     fn_cust_city VARCHAR(35) DEFAULT NULL,
     fn_location_coordinates POINT DEFAULT NULL,
-    fn_cust_birthdate DATE DEFAULT NULL
+    fn_cust_birthdate DATE DEFAULT NULL,
+    fn_picture_path VARCHAR(255) DEFAULT NULL
 )
 LANGUAGE PLPGSQL
 AS
@@ -78,11 +79,13 @@ BEGIN
     INSERT INTO customers_accounts(
         customer_id,
         customer_phone_id,
-        customer_password
+        customer_password,
+        picture_path
     ) VALUES(
         fn_cust_id,
         fn_phone_id,
-        fn_cust_password
+        fn_cust_password,
+        fn_picture_path
     );
     RAISE NOTICE USING MESSAGE = 'Account created successfully';
 END;
@@ -100,7 +103,7 @@ $$;
 --     '01000015545',
 --     'ahsjdhajsdhjashdjhasjd',
 --     '1sh ali hesssen'
--- )
+-- ) 
 CREATE OR REPLACE PROCEDURE pr_add_account_to_customer(
     fn_cust_id INT,
     fn_cust_first_name VARCHAR(35),
@@ -111,7 +114,8 @@ CREATE OR REPLACE PROCEDURE pr_add_account_to_customer(
     fn_cust_address VARCHAR(95),
     fn_cust_city VARCHAR(35) DEFAULT NULL,
     fn_location_coordinates POINT DEFAULT NULL,
-    fn_cust_birthdate DATE DEFAULT NULL
+    fn_cust_birthdate DATE DEFAULT NULL,
+    fn_picture_path VARCHAR(255) DEFAULT NULL
 )
 LANGUAGE PLPGSQL
 AS
@@ -142,11 +146,13 @@ BEGIN
         INSERT INTO customers_accounts(
         customer_id,
         customer_phone_id,
-        customer_password
+        customer_password,
+        picture_path
         ) VALUES(
             fn_cust_id,
             fn_phone_id,
-            fn_cust_password
+            fn_cust_password,
+            fn_picture_path
         );
 
         PERFORM 1 FROM customers_addresses_list 
@@ -348,5 +354,56 @@ BEGIN
             RAISE NOTICE 'Request added';
         END IF;
     END IF;
+END;
+$$;
+
+
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE pr_add_favorite(
+    p_customer_id INT,
+    p_item_id INT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM customers WHERE customer_id = p_customer_id) THEN
+        RAISE EXCEPTION 'Customer ID % does not exist', p_customer_id;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM menu_items WHERE item_id = p_item_id) THEN
+        RAISE EXCEPTION 'Item ID % does not exist', p_item_id;
+    END IF;
+
+    INSERT INTO customers_favorites (customer_id, item_id)
+    VALUES (p_customer_id, p_item_id)
+    ON CONFLICT (customer_id, item_id) DO NOTHING;
+END;
+$$;
+
+-- Procedure to add a rating
+CREATE OR REPLACE PROCEDURE p_add_rating(
+    p_customer_id INT,
+    p_item_id INT,
+    p_rating INTEGER
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM customers WHERE customer_id = p_customer_id) THEN
+        RAISE EXCEPTION 'Customer ID % does not exist', p_customer_id;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM menu_items WHERE item_id = p_item_id) THEN
+        RAISE EXCEPTION 'Item ID % does not exist', p_item_id;
+    END IF;
+
+    INSERT INTO customers_ratings (customer_id, item_id, rating)
+    VALUES (p_customer_id, p_item_id, p_rating)
+    ON CONFLICT (customer_id, item_id) DO UPDATE
+    SET rating = EXCLUDED.rating;
 END;
 $$;

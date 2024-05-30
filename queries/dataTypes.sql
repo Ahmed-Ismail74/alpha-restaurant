@@ -46,10 +46,16 @@ BEGIN
     END IF;
 	
 	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'item_day_type') THEN
-        CREATE TYPE item_day_type AS ENUM ('breakfast','lunch','dinner', 'brunch', 'supper', 'midnight snack');
+        CREATE TYPE item_day_type AS ENUM ('breakfast','lunch','dinner', 'brunch', 'supper', 'midnight snack','all time');
     END IF;
-    -- IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'roles_type') THEN
-    --     CREATE TYPE roles_type AS ENUM ('manager','hr','operation manager', 'section manager', 'cashier', 'delivery', 'no role');
-    -- END IF;
+    
+	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'range_0_to_5') THEN
+        CREATE TYPE range_0_to_5 AS ENUM ('0', '1', '2', '3', '4', '5');
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'roles_type') THEN
+        CREATE TYPE roles_type AS ENUM ('manager','hr','operation manager', 'section manager', 'cashier', 'delivery', 'no role');
+    END IF;
 END
 $$;
+
