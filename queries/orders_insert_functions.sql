@@ -52,7 +52,8 @@ BEGIN
                 order_status ,
                 order_total_price,
                 order_customer_discount ,
-                order_payment_method
+                order_payment_method,
+                virtual_room
             )
             VALUES(
                 pr_customer_id ,
@@ -61,7 +62,8 @@ BEGIN
                 pr_order_status ,
                 pr_total_price,
                 pr_additional_discount,
-                pr_payment_method
+                pr_payment_method,
+                FALSE
             ) RETURNING order_id INTO pr_order_id;
             -- lounge order or Delive
             IF pr_order_type = 'delivery' THEN
@@ -184,7 +186,8 @@ BEGIN
                 order_status ,
                 order_total_price,
                 order_customer_discount ,
-                order_payment_method
+                order_payment_method,
+                virtual_room
             )
             VALUES(
                 pr_customer_id ,
@@ -193,7 +196,8 @@ BEGIN
                 pr_order_status ,
                 pr_total_price,
                 pr_additional_discount,
-                pr_payment_method
+                pr_payment_method,
+                TRUE
             ) RETURNING order_id INTO pr_order_id;
             -- lounge order or Delive
             IF pr_order_type = 'delivery' THEN
