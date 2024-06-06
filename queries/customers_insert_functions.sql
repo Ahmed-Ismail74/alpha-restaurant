@@ -53,7 +53,7 @@ BEGIN
     SELECT customer_phone_id INTO fn_phone_id 
     FROM customers_phones_list 
     WHERE customer_phone = fn_cust_phone;
-
+    
     IF fn_phone_id IS NULL THEN
         INSERT INTO customers_phones_list(
             customer_id,
@@ -137,10 +137,11 @@ BEGIN
             customer_birthdate = fn_cust_birthdate
         WHERE customer_id = fn_cust_id;
 
+
         SELECT customer_phone_id INTO fn_phone_id
         FROM customers_phones_list
         WHERE 
-            fn_cust_phone = customer_phone
+            customer_phone = fn_cust_phone
             AND customer_id = fn_cust_id;
         
         INSERT INTO customers_accounts(
@@ -182,10 +183,6 @@ BEGIN
     END IF;
 END;
 $$;
-
-
-
-
 
 
 -- EX: CALL pr_add_customer(
@@ -324,6 +321,7 @@ BEGIN
     END IF;
 END;
 $$;
+
 -- function to add a friend request using id of accounts not id of customers
 CREATE OR REPLACE PROCEDURE pr_add_friend_request(
     pr_sender_account_id INT,
@@ -388,7 +386,7 @@ $$;
 CREATE OR REPLACE PROCEDURE p_add_rating(
     p_customer_id INT,
     p_item_id INT,
-    p_rating INTEGER
+    p_rating range_0_to_5 
 )
 LANGUAGE plpgsql
 AS $$
@@ -407,3 +405,12 @@ BEGIN
     SET rating = EXCLUDED.rating;
 END;
 $$;
+
+-- SELECT * FROM customers;
+-- SELECT * FROM customers_addresses_list;
+-- SELECT * FROM customers_phones_list;
+-- SELECT * FROM menu_items;
+-- SELECT * FROM branches;
+-- SELECT * FROM branches_menu;
+-- SELECT * FROM customers_ratings;
+-- SELECT * FROM customers_favorites;
