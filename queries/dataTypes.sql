@@ -40,9 +40,9 @@ BEGIN
 	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'order_type') THEN
         CREATE TYPE order_type AS ENUM ('delivery','dine-in','take away');
     END IF;
-	
+	        
 	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'payment_method_type') THEN
-        CREATE TYPE payment_method_type AS ENUM ('cash','when recieving','credit');
+CREATE TYPE payment_method_type AS ENUM ('cash','when recieving','credit');
     END IF;
 	
 	IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'item_day_type') THEN

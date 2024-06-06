@@ -1,18 +1,18 @@
--- Funtion to add position
-CREATE OR REPLACE FUNCTION fn_add_position(
+-- Procedure to add position
+CREATE OR REPLACE PROCEDURE pr_add_position(
 	f_position_name varchar(25) ,
+	p_emp_role roles_type, 
 	f_job_description varchar(255) DEFAULT NULL
 )
-RETURNS VARCHAR
 LANGUAGE PLPGSQL
 AS $$
 BEGIN
 	IF EXISTS (SELECT 1 FROM positions WHERE position_name = f_position_name) THEN
-		RETURN 'Position already exist';
+		RAISE EXCEPTION 'Position already exist';
 	ELSE
-		INSERT INTO positions(position_name, job_description)
-		VALUES (f_position_name, f_job_description);
-		RETURN 'position added';
+		INSERT INTO positions(position_name, job_description, emp_role)
+		VALUES (f_position_name, f_job_description, p_emp_role);
+		RAISE NOTICE 'position added';
 	END IF;
 END;
 $$;
@@ -81,33 +81,31 @@ END;
 $$;
 
 
--- Function to insert data into employees account using id 
--- Called using select -> select fn_insert_employee_account
-CREATE OR REPLACE FUNCTION fn_insert_employee_account(
-    f_employee_id INT,
-    f_email varchar(254),
-    f_password varchar(512),
-	f_salt varchar(16)
+-- PROCEDURE to insert data into employees account using id 
+CREATE OR REPLACE PROCEDURE pr_insert_employee_account(
+    p_employee_id INT,
+    p_email varchar(254),
+    p_password varchar(512),
+	p_picture_path varchar(255)
 )
-RETURNS VARCHAR
 LANGUAGE PLPGSQL
 AS $$
 BEGIN
 	IF EXISTS (SELECT 1 FROM employees_accounts WHERE employee_email = f_email) THEN
-		RETURN 'Account existed';
+		RAISE EXCEPTION 'Account existed';
 	ELSE
 		INSERT INTO employees_accounts (
 			employee_id,
 			employee_email,
 			employee_password,
-			employee_salt
+			picture_path
 		) VALUES (
-			f_employee_id,
-			f_email,
-			f_password,
-			f_salt
+			p_employee_id,
+			p_email,
+			p_password,
+			p_picture_path
 		);
-		RETURN 'Account added';
+		RAISE NOTICE 'Account added';
 	END IF;
 END;
 $$;

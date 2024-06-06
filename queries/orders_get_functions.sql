@@ -95,7 +95,6 @@ $$;
 
 
 
-
 CREATE OR REPLACE FUNCTION fn_get_non_virtual_order_details(
     fn_order_id INT
 )

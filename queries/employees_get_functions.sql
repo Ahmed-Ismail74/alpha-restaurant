@@ -205,17 +205,6 @@ END;
 $$;
 
 
-CREATE OR REPLACE FUNCTION fn_emp_login(
-	fn_employee_email varchar(254)
-)
-RETURNS VARCHAR
-LANGUAGE PLPGSQL
-AS$$
-BEGIN
-	
-END;
-$$;
-
 CREATE OR REPLACE FUNCTION fn_get_employee_hash(
 	fn_employee_email varchar(254)
 )
@@ -231,6 +220,66 @@ BEGIN
 		RETURN (
 			SELECT employee_password FROM employees_accounts
 			WHERE employee_email = fn_employee_email
+			);
+	END IF;
+END;
+$$;
+
+
+
+
+CREATE OR REPLACE FUNCTION fn_get_employee_sign_in_info(
+	fn_employee_email varchar(254)
+)
+RETURNS TABLE(
+    employee_id INT ,
+	employee_first_name VARCHAR(35),
+	employee_last_name VARCHAR(35),
+	employee_status employee_status_type ,
+	
+	employee_position varchar(25) ,
+	employee_role roles_type,
+	
+	employee_branch_name VARCHAR(35),
+	employee_branch_id INT,
+	branch_section_id INT,
+
+	picture_path varchar(255)
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    fn_employee_id INT;
+BEGIN
+	SELECT acc.employee_id FROM employees_accounts acc INTO fn_employee_id
+	WHERE acc.employee_email = fn_employee_email;
+	IF NOT FOUND THEN
+		RAISE EXCEPTION 'Email not Exist';
+	ELSE
+		RETURN QUERY(
+			SELECT emp.employee_id,
+			emp.employee_first_name,
+			emp.employee_last_name,
+			emp.employee_status,
+
+			pos.position_name,
+			pos.emp_role,
+
+			br.branch_name,
+			staff.branch_id ,
+			staff.section_id ,
+
+			acc.picture_path
+
+			FROM employees emp
+
+			LEFT JOIN employees_accounts acc ON acc.employee_id = emp.employee_id
+			LEFT JOIN employees_position emp_pos ON emp_pos.employee_id = emp.employee_id
+			LEFT JOIN positions pos ON pos.position_id = emp_pos.position_id
+			LEFT JOIN branches_staff staff ON staff.employee_id = emp.employee_id
+			LEFT JOIN branches br ON br.branch_id = staff.branch_id
+
+			WHERE emp.employee_id = fn_employee_id
 			);
 	END IF;
 END;
