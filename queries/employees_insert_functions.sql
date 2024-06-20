@@ -91,7 +91,7 @@ CREATE OR REPLACE PROCEDURE pr_insert_employee_account(
 LANGUAGE PLPGSQL
 AS $$
 BEGIN
-	IF EXISTS (SELECT 1 FROM employees_accounts WHERE employee_email = f_email) THEN
+	IF EXISTS (SELECT 1 FROM employees_accounts WHERE employee_email = p_email) THEN
 		RAISE EXCEPTION 'Account existed';
 	ELSE
 		INSERT INTO employees_accounts (
@@ -183,59 +183,47 @@ END;
 $$;
 
 
--- Add time in attendance to an employee
--- EX: SELECT * FROM fn_add_time_in_attendance(3,1);
-CREATE OR REPLACE FUNCTION fn_add_time_in_attendance(
-	fn_schedule_id INT,
-	fn_employee_id INT,
-	fn_time_in TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-)
-RETURNS VOID
-LANGUAGE PLPGSQL
-AS $$
-BEGIN
-	PERFORM 1 FROM employees WHERE employee_id = fn_employee_id;
-	IF NOT FOUND THEN
-		RAISE EXCEPTION 'Employee not found';
-	ELSE
-		PERFORM schedule_id FROM employee_schedule WHERE schedule_id = fn_schedule_id AND employee_id = fn_employee_id;
-		IF NOT FOUND THEN
-			RAISE EXCEPTION 'Employee Not authorized to attend';
-		ELSE
-			INSERT INTO employee_attendance(schedule_id, employee_id, date_in)
-			VALUES (fn_schedule_id, fn_employee_id, fn_time_in);
-			RAISE NOTICE 'Attendance has been registered successfully';
-		END IF;
-	END IF;
-END;
-$$;
 
 
--- Add time in attendance to an employee
--- EX: SELECT * FROM fn_add_time_out_attendance(3,1);
-CREATE OR REPLACE FUNCTION fn_add_time_out_attendance(
-	fn_schedule_id INT,
-	fn_employee_id INT,
-	fn_time_out TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-)
-RETURNS VOID
-LANGUAGE PLPGSQL
+
+
+
+
+CREATE OR REPLACE PROCEDURE check_in_employee(IN pr_employee_id INT)
+LANGUAGE plpgsql
 AS $$
+DECLARE
+    current_schedule_id INT;
+    shift_start TIMESTAMPTZ;
 BEGIN
-	PERFORM 1 FROM employees WHERE employee_id = fn_employee_id;
-	IF NOT FOUND THEN
-		RAISE EXCEPTION 'Employee not found';
-	ELSE
-		PERFORM schedule_id FROM employee_schedule WHERE schedule_id = fn_schedule_id AND employee_id = fn_employee_id;
-		IF NOT FOUND THEN
-			RAISE EXCEPTION 'Employee Not authorized to attend';
-		ELSE
-			UPDATE employee_attendance
-			SET date_out = fn_time_out
-			WHERE schedule_id = fn_schedule_id AND employee_id = fn_employee_id;
-			RAISE NOTICE 'The checkout has been registered successfully';
-		END IF;
-	END IF;
+    -- Find the schedule for today
+    SELECT schedule_id, shift_start_time INTO current_schedule_id, shift_start
+    FROM employee_schedule
+    WHERE employee_id = pr_employee_id
+      AND shift_start_time::DATE = CURRENT_DATE;
+
+    IF current_schedule_id IS NULL THEN
+        RAISE EXCEPTION 'No scheduled shift for today.';
+        RETURN;
+    END IF;
+
+    -- Check if the current time is within 4 hours from the start shift time
+    IF CURRENT_TIMESTAMP > shift_start + INTERVAL '4 hours' THEN
+        RAISE EXCEPTION 'Check-in time has expired. You can only check-in within 4 hours from the start of your shift.';
+        RETURN;
+    END IF;
+
+    -- Check if already checked in
+    IF EXISTS (SELECT 1 FROM employee_attendance WHERE schedule_id = current_schedule_id AND employee_id = pr_employee_id) THEN
+        RAISE EXCEPTION 'Already checked in for today.';
+        RETURN;
+    END IF;
+
+    -- Insert check-in record
+    INSERT INTO employee_attendance (schedule_id, employee_id, date_in)
+    VALUES (current_schedule_id, pr_employee_id, CURRENT_TIMESTAMP);
+
+    RAISE NOTICE 'Checked in successfully.';
 END;
 $$;
 
@@ -245,14 +233,45 @@ $$;
 
 
 
+CREATE OR REPLACE PROCEDURE check_out_employee(IN pr_employee_id INT)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    current_schedule_id INT;
+    shift_start TIMESTAMPTZ;
+    shift_end TIMESTAMPTZ;
+BEGIN
+    -- Find the schedule for today
+    SELECT schedule_id, shift_start_time, shift_end_time INTO current_schedule_id, shift_start, shift_end
+    FROM employee_schedule
+    WHERE employee_id = pr_employee_id
+      AND shift_start_time::DATE = CURRENT_DATE;
 
+    IF current_schedule_id IS NULL THEN
+        RAISE EXCEPTION 'No scheduled shift for today.';
+        RETURN;
+    END IF;
 
+    -- Check if already checked in
+    IF NOT EXISTS (SELECT 1 FROM employee_attendance WHERE schedule_id = current_schedule_id AND employee_id = pr_employee_id) THEN
+        RAISE EXCEPTION 'Not checked in for today.';
+        RETURN;
+    END IF;
 
+    -- Check if the current time is before 4 hours from the end shift time or after 8 hours from the start shift time
+    IF CURRENT_TIMESTAMP > shift_end - INTERVAL '4 hours' AND CURRENT_TIMESTAMP < shift_start + INTERVAL '8 hours' THEN
+        RAISE EXCEPTION 'Check-out is only allowed before 4 hours from the end of your shift or after 8 hours from the start of your shift.';
+        RETURN;
+    END IF;
 
+    -- Update check-out time
+    UPDATE employee_attendance
+    SET date_out = CURRENT_TIMESTAMP
+    WHERE schedule_id = current_schedule_id AND employee_id = pr_employee_id;
 
-
-
-
+    RAISE NOTICE 'Checked out successfully.';
+END;
+$$;
 
 
 --Note: add constraints on the time where employee can change attendance

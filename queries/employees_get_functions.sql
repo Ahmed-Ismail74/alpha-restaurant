@@ -226,8 +226,6 @@ END;
 $$;
 
 
-
-
 CREATE OR REPLACE FUNCTION fn_get_employee_sign_in_info(
 	fn_employee_email varchar(254)
 )
@@ -243,6 +241,7 @@ RETURNS TABLE(
 	employee_branch_name VARCHAR(35),
 	employee_branch_id INT,
 	branch_section_id INT,
+	section_name VARCHAR(35),
 
 	picture_path varchar(255)
 )
@@ -268,7 +267,7 @@ BEGIN
 			br.branch_name,
 			staff.branch_id ,
 			staff.section_id ,
-
+			sec.section_name,
 			acc.picture_path
 
 			FROM employees emp
@@ -278,7 +277,7 @@ BEGIN
 			LEFT JOIN positions pos ON pos.position_id = emp_pos.position_id
 			LEFT JOIN branches_staff staff ON staff.employee_id = emp.employee_id
 			LEFT JOIN branches br ON br.branch_id = staff.branch_id
-
+			LEFT JOIN sections sec ON staff.section_id = sec.section_id
 			WHERE emp.employee_id = fn_employee_id
 			);
 	END IF;
