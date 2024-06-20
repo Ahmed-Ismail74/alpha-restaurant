@@ -26,10 +26,12 @@ $$;
 
 
 -- get orders of customer
--- SELECT * FROM fn_get_customer_orders(2,2);
+-- SELECT * FROM fn_get_customer_orders(125,2,'completed');
+
 CREATE OR REPLACE FUNCTION fn_get_customer_orders(
     fn_customer_id INT,
-    fn_limit INT
+    fn_limit INT,
+    fn_orders_status order_status_type DEFAULT NULL
 )
 RETURNS TABLE(
     order_id INT,
@@ -57,7 +59,7 @@ BEGIN
 
             LEFT JOIN branches br ON br.branch_id = ord.branch_id
             
-            WHERE customer_id = fn_customer_id
+            WHERE customer_id = fn_customer_id AND (ord.order_status = fn_orders_status OR fn_orders_status IS NULL)
             ORDER BY ord.order_date DESC
             LIMIT fn_limit;
     END IF;
@@ -119,3 +121,5 @@ BEGIN
     END IF;
 END;
 $$;
+
+
