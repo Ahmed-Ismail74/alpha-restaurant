@@ -1,18 +1,18 @@
-SELECT fn_add_position('hr', 'Manages recruitment, training, and development of employees across the company. Implements HR policies and procedures, including compensation, benefits, and performance management');
-SELECT fn_add_position('operation manager', 'Oversees overall operations of the company, including restaurant branches, production facilities, and distribution centers. Develops and implements operational policies, procedures, and performance metrics.');
-SELECT fn_add_position('logistics coordinator', 'Coordinates transportation and logistics activities, including scheduling deliveries and managing routes. Communicates with suppliers, carriers, and internal teams to ensure timely delivery of goods.');
-SELECT fn_add_position('head bar', 'oversees the outlet bar operations and other bartenders work to ensure that they provide positive customer experience. He/She ensures the smooth running of the bar.');
-SELECT fn_add_position('barista', 'mixes drinks, and serves beverages according to established recipes and customer preferences. Maintains cleanliness and organization of the bar area, including stocking supplies and cleaning equipment.');
-SELECT fn_add_position('head waiter', 'Takes orders from customers, serves food and beverages, and provides excellent customer service. Answers questions about menu items, takes payments, and ensures a positive dining experience.');
-SELECT fn_add_position('dish washer', 'Cleans and sanitizes dishes, utensils, and kitchen equipment. Assists with maintaining cleanliness and organization in the kitchen.');
-SELECT fn_add_position('delivery driver', 'Delivers food orders to customers  homes or offices. Ensures timely and accurate delivery, collects payments, and provides excellent customer service.');
-SELECT fn_add_position('chief', 'Responsible for planning menus, preparing and cooking food, and maintaining food quality and presentation. Supervises kitchen staff, manages inventory, and ensures compliance with health and safety regulations.');
-SELECT fn_add_position('cashier', 'The cashier runs the cash register, processes payments, and interacts with customers. Sometimes a cashier also takes orders from guests.');
-SELECT fn_add_position('kitchen manager', 'A kitchen manager helps manage the back of house team, including prep and clean up. They help ensure all sanitation standards are met. They often are responsible for ordering ingredients and replacing or adding equipment within a budget.');
-SELECT fn_add_position('assistant manager', 'Researching new wholesale food suppliers and negotiating prices
+SELECT pr_add_position('hr', 'Manages recruitment, training, and development of employees across the company. Implements HR policies and procedures, including compensation, benefits, and performance management');
+SELECT pr_add_position('operation manager', 'Oversees overall operations of the company, including restaurant branches, production facilities, and distribution centers. Develops and implements operational policies, procedures, and performance metrics.');
+SELECT pr_add_position('logistics coordinator', 'Coordinates transportation and logistics activities, including scheduling deliveries and managing routes. Communicates with suppliers, carriers, and internal teams to ensure timely delivery of goods.');
+SELECT pr_add_position('head bar', 'oversees the outlet bar operations and other bartenders work to ensure that they provide positive customer experience. He/She ensures the smooth running of the bar.');
+SELECT pr_add_position('barista', 'mixes drinks, and serves beverages according to established recipes and customer preferences. Maintains cleanliness and organization of the bar area, including stocking supplies and cleaning equipment.');
+SELECT pr_add_position('head waiter', 'Takes orders from customers, serves food and beverages, and provides excellent customer service. Answers questions about menu items, takes payments, and ensures a positive dining experience.');
+SELECT pr_add_position('dish washer', 'Cleans and sanitizes dishes, utensils, and kitchen equipment. Assists with maintaining cleanliness and organization in the kitchen.');
+SELECT pr_add_position('delivery driver', 'Delivers food orders to customers  homes or offices. Ensures timely and accurate delivery, collects payments, and provides excellent customer service.');
+SELECT pr_add_position('chief', 'Responsible for planning menus, preparing and cooking food, and maintaining food quality and presentation. Supervises kitchen staff, manages inventory, and ensures compliance with health and safety regulations.');
+SELECT pr_add_position('cashier', 'The cashier runs the cash register, processes payments, and interacts with customers. Sometimes a cashier also takes orders from guests.');
+SELECT pr_add_position('kitchen manager', 'A kitchen manager helps manage the back of house team, including prep and clean up. They help ensure all sanitation standards are met. They often are responsible for ordering ingredients and replacing or adding equipment within a budget.');
+SELECT pr_add_position('assistant manager', 'Researching new wholesale food suppliers and negotiating prices
 Calculating future needs in kitchenware and equipment and placing orders, as needed
 Managing and storing vendors contracts and invoices');
-SELECT fn_add_position('branch manager', 'responsible for hiring applicants, letting employees go, training new hires, overseeing general restaurant activities, and working on marketing and community outreach strategies. They may also help to set menu prices and purchase supplies.');
+SELECT pr_add_position('branch manager', 'responsible for hiring applicants, letting employees go, training new hires, overseeing general restaurant activities, and working on marketing and community outreach strategies. They may also help to set menu prices and purchase supplies.');
 SELECT * FROM positions;
 
 ---------------------------------------------------------------------------------------
@@ -106,3 +106,32 @@ SELECT * FROM branches_menu;
 
 
 ---------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+-- Adding Seasons
+SELECT fn_add_season('Spring', 'March to May: Season of mild weather and blooming flowers.');
+SELECT fn_add_season('Summer', 'June to August: Hot weather, popular for cooling and refreshing dishes.');
+SELECT fn_add_season('Autumn', 'September to November: Mild weather, harvest season.');
+SELECT fn_add_season('Winter', 'December to February: Cooler weather, ideal for hearty and warming dishes.');
+
+-- Adding Occasions
+SELECT fn_add_season('Ramadan', 'A holy month of fasting from dawn to sunset, with special meals for Iftar and Suhoor.');
+SELECT fn_add_season('Eid al-Fitr', 'Festival of Breaking the Fast, celebrated at the end of Ramadan with various sweets and festive dishes.');
+SELECT fn_add_season('Eid al-Adha', 'Festival of Sacrifice, commemorating the willingness of Ibrahim to sacrifice his son, celebrated with feasts involving meat.');
+SELECT fn_add_season('Sham El-Nessim', 'Spring festival celebrated with traditional dishes like Fesikh and Renga.');
+SELECT fn_add_season('Coptic Christmas and Easter', 'Celebrations with special dishes such as Fatta and Zalabya.');
+SELECT fn_add_season('Weddings', 'Special occasions often featuring dishes like Mahshi and Roz Bel Laban.');
+SELECT fn_add_season('Birthdays and Celebrations', 'Celebrated with sweet treats like Basbousa and Umm Ali.');
+SELECT fn_add_season('Festivals and National Holidays', 'Commonly enjoyed with popular dishes like Koshari and Hawawshi.');
+
+SELECT * FROM seasons;
+SELECT * FROM menu_items;
+SELECT fn_add_item_season(121,2);
+SELECT fn_add_item_season(122,2);
+SELECT fn_add_item_season(123,2);

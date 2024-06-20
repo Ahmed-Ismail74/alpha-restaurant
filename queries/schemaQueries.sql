@@ -550,3 +550,47 @@
 		rating range_0_to_5 NOT NULL,
 		PRIMARY KEY (customer_id, item_id)
 	);
+
+	CREATE TABLE IF NOT EXISTS average_ratings(
+		item_id INT REFERENCES menu_items ON DELETE RESTRICT ON UPDATE CASCADE NOT NULL,
+		average_rating NUMERIC(3, 2) NOT NULL,
+		raters_number INT NOT NULL,
+		PRIMARY KEY (item_id)
+	);
+
+
+CREATE OR REPLACE FUNCTION update_average_ratings() RETURNS TRIGGER AS $$
+BEGIN
+    -- Update the average rating and raters number
+    UPDATE average_ratings
+    SET average_rating = (
+        SELECT AVG(
+            CASE rating
+                WHEN '0' THEN 0
+                WHEN '1' THEN 1
+                WHEN '2' THEN 2
+                WHEN '3' THEN 3
+                WHEN '4' THEN 4
+                WHEN '5' THEN 5
+            END
+        )::NUMERIC(3, 2)
+        FROM customers_ratings
+        WHERE item_id = NEW.item_id
+    ),
+    raters_number = (
+        SELECT COUNT(customer_id)
+        FROM customers_ratings
+        WHERE item_id = NEW.item_id
+    )
+    WHERE item_id = NEW.item_id;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+CREATE TRIGGER update_average_ratings_trigger
+AFTER INSERT OR UPDATE OR DELETE ON customers_ratings
+FOR EACH ROW
+EXECUTE FUNCTION update_average_ratings();
