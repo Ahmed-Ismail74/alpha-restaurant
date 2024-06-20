@@ -85,34 +85,6 @@ BEGIN
 END;
 $$;
 
--- Function to get branch menu by item time
--- SELECT * FROM fn_get_branch_menu_by_time(2,'lunch');
-CREATE OR REPLACE FUNCTION fn_get_branch_menu_by_time(
-    fn_branch_id INT,
-    fn_time_type item_day_type
-)
-RETURNS TABLE(
-    id INT,
-    Item VARCHAR(35),
-    item_status menu_item_type,
-    item_discount NUMERIC(4, 2),
-    item_price NUMERIC(10, 2),
-    preparation_time INTERVAL,
-    category VARCHAR(35),
-    picture_path VARCHAR(255)
-)
-LANGUAGE PLPGSQL
-AS $$
-BEGIN
-    RETURN QUERY
-        SELECT * FROM fn_get_branch_menu(fn_branch_id) menu
-        WHERE menu.id IN (
-            SELECT item_id FROM items_type_day_time 
-            WHERE item_type = fn_time_type
-        );
-END;
-$$;
-
 -- Function to get price or discount changes of item in all branches 
 -- SELECT * FROM fn_get_item_price_changes(100);
 CREATE OR REPLACE FUNCTION fn_get_item_price_changes(
@@ -294,4 +266,203 @@ BEGIN
 END;
 $$;
 
+
+
+
+
+
+CREATE OR REPLACE FUNCTION fn_get_branch_menu_by_time_and_season(
+fn_branch_id INT,
+fn_time_type item_day_type,
+fn_season_id INT
+)
+RETURNS TABLE(
+    id INT,
+    Item VARCHAR(35),
+    item_status menu_item_type,
+    item_discount NUMERIC(4, 2),
+    item_price NUMERIC(10, 2),
+    preparation_time INTERVAL,
+    category VARCHAR(35),
+    picture_path VARCHAR(255)
+)
+LANGUAGE PLPGSQL
+AS $$
+BEGIN
+    RETURN QUERY
+        SELECT menu.id,
+            menu.Item,
+            menu.item_status ,
+            menu.item_discount ,
+            menu.item_price ,
+            menu.preparation_time ,
+            menu.category,
+            menu.picture_path 
+        FROM fn_get_branch_menu(fn_branch_id) menu
+        LEFT JOIN items_type_day_time tp ON menu.id = tp.item_id
+        JOIN items_seasons seas 
+        ON seas.season_id = fn_season_id AND seas.item_id = tp.item_id
+        WHERE tp.item_type = fn_time_type;
+END;
+$$;
+
+
+-- get branch menu and filtter it OR get General branch 
+-- SELECT * FROM filter_menu_items(1);
+CREATE OR REPLACE FUNCTION filter_menu_items(
+    p_branch_id INT,
+    p_season_id INT DEFAULT NULL ,
+    p_item_type item_day_type DEFAULT NULL ,
+    p_category_id INT DEFAULT NULL,
+    p_item_status menu_item_type DEFAULT NULL,
+    p_vegetarian BOOLEAN DEFAULT NULL,
+    p_healthy BOOLEAN DEFAULT NULL
+)
+RETURNS TABLE (
+    item_id INT,
+    item_name VARCHAR(35),
+    category_id INT,
+    item_description VARCHAR(254),
+    preparation_time INTERVAL,
+    picture_path VARCHAR(255),
+    vegetarian BOOLEAN,
+    healthy BOOLEAN,
+    item_status menu_item_type,
+    discount NUMERIC(4, 2),
+    price NUMERIC(10, 2),
+    average_rating NUMERIC(3, 2),
+    raters_number INT
+) 
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        mi.item_id,
+        mi.item_name,
+        mi.category_id,
+        mi.item_description,
+        mi.preparation_time,
+        mi.picture_path,
+        mi.vegetarian,
+        mi.healthy,
+        br_menu.item_status,
+        br_menu.item_discount,
+        br_menu.item_price,
+        rat.average_rating,
+        rat.raters_number
+    FROM 
+        branches_menu br_menu
+    LEFT JOIN
+        menu_items mi ON mi.item_id = br_menu.item_id
+    LEFT JOIN 
+        items_seasons iss ON mi.item_id = iss.item_id
+    LEFT JOIN 
+        seasons s ON iss.season_id = s.season_id
+    LEFT JOIN 
+        items_type_day_time itd ON mi.item_id = itd.item_id
+    LEFT JOIN 
+        average_ratings rat ON mi.item_id = rat.item_id
+    WHERE 
+        br_menu.branch_id = p_branch_id AND
+        (p_item_status IS NULL OR br_menu.item_status = p_item_status) AND
+
+
+        (p_vegetarian IS NULL OR mi.vegetarian = p_vegetarian) AND
+        (p_healthy IS NULL OR mi.healthy = p_healthy) AND
+
+
+        (p_season_id IS NULL OR s.season_id = p_season_id) AND
+        (p_item_type IS NULL OR itd.item_type = p_item_type) AND
+        (p_category_id IS NULL OR mi.category_id = p_category_id);
+END;
+$$;
+
+
+
+CREATE OR REPLACE FUNCTION compare_branches()
+RETURNS TABLE(
+    branch_id INT,
+    branch_name VARCHAR(35),
+    total_sales NUMERIC,
+    total_orders BIGINT
+) 
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        b.branch_id,
+        b.branch_name,
+        COALESCE(SUM(o.order_total_price), 0) AS total_sales,
+        COUNT(o.order_id) AS total_orders
+    FROM branches b
+    LEFT JOIN orders o ON o.branch_id = b.branch_id
+    GROUP BY b.branch_id, b.branch_name
+    ORDER BY total_sales DESC;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION get_branch_performance(fn_branch_id INT)
+RETURNS TABLE(
+    sales_date DATE,
+    total_sales NUMERIC,
+    total_orders BIGINT
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        o.order_date::DATE AS sales_date,
+        COALESCE(SUM(o.order_total_price), 0) AS total_sales,
+        COUNT(o.order_id) AS total_orders
+    FROM orders o
+    WHERE o.branch_id = fn_branch_id
+    GROUP BY sales_date
+    ORDER BY sales_date DESC
+    LIMIT 30;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+CREATE OR REPLACE FUNCTION get_overall_performance()
+RETURNS TABLE(
+    sales_date DATE,
+    total_sales NUMERIC,
+    total_orders BIGINT
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        o.order_date::DATE AS sales_date,
+        COALESCE(SUM(o.order_total_price), 0) AS total_sales,
+        COUNT(o.order_id) AS total_orders
+    FROM orders o
+    GROUP BY sales_date
+    ORDER BY sales_date DESC
+    LIMIT 30;
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION get_section_overview(fn_section_id INT)
+RETURNS TABLE(
+    total_sales NUMERIC,
+    total_orders BIGINT,
+    num_employees BIGINT
+) AS $$
+BEGIN
+    RETURN QUERY 
+    SELECT 
+        COALESCE(SUM(o.order_total_price), 0) AS total_sales,
+        COUNT(o.order_id) AS total_orders,
+        COUNT(DISTINCT e.employee_id) AS num_employees
+    FROM orders o
+    JOIN branches b ON o.branch_id = b.branch_id
+    JOIN branch_sections bs ON b.branch_id = bs.branch_id
+    JOIN branches_staff eb ON eb.branch_id = b.branch_id
+    JOIN employees e ON e.employee_id = eb.employee_id
+    WHERE bs.section_id = fn_section_id;
+END;
+$$ LANGUAGE plpgsql;
 

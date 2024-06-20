@@ -24,15 +24,15 @@ AS
 
 --categories details view  
 CREATE OR REPLACE VIEW vw_categories(
+    category_id,
 	category_name,
 	section_name,
 	category_description
 )
 AS 
-    SELECT categories.category_name, sections.section_name, categories.category_description
+    SELECT categories.category_id,categories.category_name, sections.section_name, categories.category_description
     FROM categories
     JOIN sections ON sections.section_id = categories.section_id;
-
 
 
 
