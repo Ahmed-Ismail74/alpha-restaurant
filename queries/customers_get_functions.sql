@@ -234,3 +234,31 @@ BEGIN
 	END IF;
 END;
 $$;
+
+
+
+
+CREATE OR REPLACE FUNCTION fn_get_customer_menu_ratings(
+	fn_customer_id INT
+)
+RETURNS TABLE(
+    item_id INT,
+    rating range_0_to_5
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+	PERFORM 1 FROM customers WHERE customer_id = fn_customer_id;
+	IF NOT FOUND THEN
+		RAISE EXCEPTION 'Customer not Exist';
+	ELSE
+		RETURN QUERY(
+			SELECT 
+            rat.item_id,
+            rat.rating
+            FROM customers_ratings rat
+			WHERE rat.customer_id = fn_customer_id
+			);
+	END IF;
+END;
+$$;
