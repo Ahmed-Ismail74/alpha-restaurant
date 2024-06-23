@@ -7,5 +7,25 @@
 			"path": "../SVGs"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"sqltools.connections": [
+			{
+				"pgOptions": {
+					"ssl": {
+						"rejectUnauthorized": false,
+						"requestCert": false,
+						"ca": "D:\\Coding\\git_repos\\4th year Project\\queries\\insert data\\us-east-1-bundle.crt"
+					}
+				},
+				"previewLimit": 50,
+				"server": "alpha.ctwk2g2o61b8.us-east-1.rds.amazonaws.com",
+				"port": 5432,
+				"driver": "PostgreSQL",
+				"name": "aws",
+				"database": "restaurant_db",
+				"username": "ahmed",
+				"password": "ahmed123"
+			}
+		]
+	}
 }

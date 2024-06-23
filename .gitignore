@@ -1,0 +1,52 @@
+Business Rules Specifications Sheet.docx
+database design.docx
+FIELD SPECIFICATIONS.docx
+Project ToDo.docx
+schema.docx
+Specification Sheets.docx
+database design.docx
+queries/insert data/add_items_day_time.sql
+queries/insert data/egyptian_customers_basic.csv
+queries/insert data/eu-west-3-bundle.crt
+queries/insert data/procedure_calls_with_distribution.sql
+queries/insert data/tempCodeRunnerFile.py
+queries/insert data/us-east-1-bundle.crt
+queries/insert data/CSVs/add_accounts_with_hashed_passwords.sql
+queries/insert data/CSVs/add_non_virtual_orders_with_time_based_branch.sql
+queries/insert data/CSVs/add_virtual_orders_withdate.sql
+queries/insert data/CSVs/branches_menu.csv
+queries/insert data/CSVs/branches_tables.csv
+queries/insert data/CSVs/branches.csv
+queries/insert data/CSVs/customer_accounts.csv
+queries/insert data/CSVs/customers_addresses.csv
+queries/insert data/CSVs/customers_favorites.csv
+queries/insert data/CSVs/customers_phones.csv
+queries/insert data/CSVs/customers_ratings.csv
+queries/insert data/CSVs/customers.csv
+queries/insert data/CSVs/friend_requests_limited_corrected.sql
+queries/insert data/CSVs/friend_requests.csv
+queries/insert data/CSVs/friendships.csv
+queries/insert data/CSVs/generate non v orders.py
+queries/insert data/CSVs/generate v orders.py
+queries/insert data/CSVs/generate_accounts.py
+queries/insert data/CSVs/items_day_time.csv
+queries/insert data/CSVs/lounge_orders.csv
+queries/insert data/CSVs/main_menu_items.csv
+queries/insert data/CSVs/non_virtual_orders_items.csv
+queries/insert data/CSVs/orders_connecting_details.csv
+queries/insert data/CSVs/orders_credit_details.csv
+queries/insert data/CSVs/orders.csv
+queries/insert data/CSVs/virtual_orders_credit_details.csv
+queries/insert data/CSVs/virtual_orders_items.csv
+database design.docx
+database design.docx
+queries/insert data/CSVs/ingredients.csv
+queries/insert data/CSVs/generate employees.py
+queries/insert data/CSVs/items_type_day_time.csv
+queries/insert data/CSVs/menu_items.csv
+queries/insert data/CSVs/positions.csv
+queries/insert data/CSVs/sections.csv
+queries/insert data/CSVs/tempCodeRunnerFile.py
+queries/insert data/CSVs/generate employees - Copy.py
+queries/insert data/CSVs/add_employees_script.sql
+queries/insert data/ingredinets.sql
