@@ -203,10 +203,6 @@
 		
 	);
 
-	ALTER TABLE employees_transfers ADD CONSTRAINT  employees_transfers_manager_id_fkey
-	FOREIGN KEY (old_branch_id, transfer_made_by) 
-	REFERENCES branches_managers(branch_id, manager_id) ON DELETE RESTRICT ON UPDATE CASCADE;
-
 
 	ALTER TABLE employees_transfers ADD CONSTRAINT  employees_transfers_new_branch_id_fkey
 	FOREIGN KEY (new_branch_id) 
@@ -594,3 +590,79 @@ CREATE TRIGGER update_average_ratings_trigger
 AFTER INSERT OR UPDATE OR DELETE ON customers_ratings
 FOR EACH ROW
 EXECUTE FUNCTION update_average_ratings();
+
+
+
+
+
+
+CREATE TABLE IF NOT EXISTS order_items_sections (
+    order_id INT REFERENCES orders(order_id) ON DELETE CASCADE NOT NULL,
+    customer_id INT REFERENCES customers(customer_id) ON DELETE CASCADE NOT NULL,
+    item_id INT REFERENCES menu_items(item_id) ON DELETE CASCADE NOT NULL,
+    section_id INT REFERENCES sections(section_id) ON DELETE CASCADE NOT NULL,
+    item_status order_status_type NOT NULL DEFAULT 'pending',
+    PRIMARY KEY (order_id, customer_id, item_id)
+);
+
+CREATE OR REPLACE FUNCTION assign_virtual_items_to_sections() RETURNS TRIGGER AS $$
+DECLARE
+    item_category_id INT;
+    item_section_id INT;
+BEGIN
+    -- Get the category ID of the item
+    SELECT category_id INTO item_category_id FROM menu_items WHERE item_id = NEW.item_id;
+    
+    -- Get the section ID of the category
+    SELECT section_id INTO item_section_id FROM categories WHERE category_id = item_category_id;
+    
+    -- Insert into order_items_sections table
+    INSERT INTO order_items_sections (order_id, customer_id, item_id, section_id, item_status)
+    VALUES (NEW.order_id, NEW.customer_id, NEW.item_id, item_section_id, 'pending');
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+
+
+
+
+CREATE OR REPLACE FUNCTION assign_non_virtual_items_to_sections() RETURNS TRIGGER AS $$
+DECLARE
+    item_category_id INT;
+    item_section_id INT;
+    order_customer_id INT;
+BEGIN
+    -- Get the category ID of the item
+    SELECT category_id INTO item_category_id FROM menu_items WHERE item_id = NEW.item_id;
+    
+    -- Get the section ID of the category
+    SELECT section_id INTO item_section_id FROM categories WHERE category_id = item_category_id;
+    
+    -- Get the customer ID from the orders table
+    SELECT customer_id INTO order_customer_id FROM orders WHERE order_id = NEW.order_id;
+    
+    -- Insert into order_items_sections table
+    INSERT INTO order_items_sections (order_id, customer_id, item_id, section_id, item_status)
+    VALUES (NEW.order_id, order_customer_id, NEW.item_id, item_section_id, 'pending');
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger for non-virtual orders
+CREATE TRIGGER assign_non_virtual_items_to_sections_trigger
+AFTER INSERT ON non_virtual_orders_items
+FOR EACH ROW
+EXECUTE FUNCTION assign_non_virtual_items_to_sections();
+
+-- Trigger for virtual orders
+CREATE TRIGGER assign_virtual_items_to_sections_trigger
+AFTER INSERT ON virtual_orders_items
+FOR EACH ROW
+EXECUTE FUNCTION assign_virtual_items_to_sections();
+
+-- DROP TRIGGER assign_non_virtual_items_to_sections_trigger ON non_virtual_orders_items;

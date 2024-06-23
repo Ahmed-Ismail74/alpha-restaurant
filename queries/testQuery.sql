@@ -1,18 +1,18 @@
-SELECT pr_add_position('hr', 'Manages recruitment, training, and development of employees across the company. Implements HR policies and procedures, including compensation, benefits, and performance management');
-SELECT pr_add_position('operation manager', 'Oversees overall operations of the company, including restaurant branches, production facilities, and distribution centers. Develops and implements operational policies, procedures, and performance metrics.');
-SELECT pr_add_position('logistics coordinator', 'Coordinates transportation and logistics activities, including scheduling deliveries and managing routes. Communicates with suppliers, carriers, and internal teams to ensure timely delivery of goods.');
-SELECT pr_add_position('head bar', 'oversees the outlet bar operations and other bartenders work to ensure that they provide positive customer experience. He/She ensures the smooth running of the bar.');
-SELECT pr_add_position('barista', 'mixes drinks, and serves beverages according to established recipes and customer preferences. Maintains cleanliness and organization of the bar area, including stocking supplies and cleaning equipment.');
-SELECT pr_add_position('head waiter', 'Takes orders from customers, serves food and beverages, and provides excellent customer service. Answers questions about menu items, takes payments, and ensures a positive dining experience.');
-SELECT pr_add_position('dish washer', 'Cleans and sanitizes dishes, utensils, and kitchen equipment. Assists with maintaining cleanliness and organization in the kitchen.');
-SELECT pr_add_position('delivery driver', 'Delivers food orders to customers  homes or offices. Ensures timely and accurate delivery, collects payments, and provides excellent customer service.');
-SELECT pr_add_position('chief', 'Responsible for planning menus, preparing and cooking food, and maintaining food quality and presentation. Supervises kitchen staff, manages inventory, and ensures compliance with health and safety regulations.');
-SELECT pr_add_position('cashier', 'The cashier runs the cash register, processes payments, and interacts with customers. Sometimes a cashier also takes orders from guests.');
-SELECT pr_add_position('kitchen manager', 'A kitchen manager helps manage the back of house team, including prep and clean up. They help ensure all sanitation standards are met. They often are responsible for ordering ingredients and replacing or adding equipment within a budget.');
-SELECT pr_add_position('assistant manager', 'Researching new wholesale food suppliers and negotiating prices
+CALL pr_add_position('hr','hr', 'Manages recruitment, training, and development of employees across the company. Implements HR policies and procedures, including compensation, benefits, and performance management');
+CALL pr_add_position('operation manager','operation manager','Oversees overall operations of the company, including restaurant branches, production facilities, and distribution centers. Develops and implements operational policies, procedures, and performance metrics.');
+CALL pr_add_position('logistics coordinator','operation manager' ,'Coordinates transportation and logistics activities, including scheduling deliveries and managing routes. Communicates with suppliers, carriers, and internal teams to ensure timely delivery of goods.');
+CALL pr_add_position('head bar','section manager','oversees the outlet bar operations and other bartenders work to ensure that they provide positive customer experience. He/She ensures the smooth running of the bar.');
+CALL pr_add_position('barista', 'no role','mixes drinks, and serves beverages according to established recipes and customer preferences. Maintains cleanliness and organization of the bar area, including stocking supplies and cleaning equipment.');
+CALL pr_add_position('head waiter','no role' ,'Takes orders from customers, serves food and beverages, and provides excellent customer service. Answers questions about menu items, takes payments, and ensures a positive dining experience.');
+CALL pr_add_position('dish washer','no role' ,'Cleans and sanitizes dishes, utensils, and kitchen equipment. Assists with maintaining cleanliness and organization in the kitchen.');
+CALL pr_add_position('delivery driver','delivery' ,'Delivers food orders to customers  homes or offices. Ensures timely and accurate delivery, collects payments, and provides excellent customer service.');
+CALL pr_add_position('chief','no role' ,'Responsible for planning menus, preparing and cooking food, and maintaining food quality and presentation. Supervises kitchen staff, manages inventory, and ensures compliance with health and safety regulations.');
+CALL pr_add_position('cashier','cashier' ,'The cashier runs the cash register, processes payments, and interacts with customers. Sometimes a cashier also takes orders from guests.');
+CALL pr_add_position('kitchen manager','section manager' ,'A kitchen manager helps manage the back of house team, including prep and clean up. They help ensure all sanitation standards are met. They often are responsible for ordering ingredients and replacing or adding equipment within a budget.');
+CALL pr_add_position('assistant manager','manager', 'Researching new wholesale food suppliers and negotiating prices
 Calculating future needs in kitchenware and equipment and placing orders, as needed
 Managing and storing vendors contracts and invoices');
-SELECT pr_add_position('branch manager', 'responsible for hiring applicants, letting employees go, training new hires, overseeing general restaurant activities, and working on marketing and community outreach strategies. They may also help to set menu prices and purchase supplies.');
+CALL pr_add_position('branch manager','manager' ,'responsible for hiring applicants, letting employees go, training new hires, overseeing general restaurant activities, and working on marketing and community outreach strategies. They may also help to set menu prices and purchase supplies.');
 SELECT * FROM positions;
 
 ---------------------------------------------------------------------------------------
