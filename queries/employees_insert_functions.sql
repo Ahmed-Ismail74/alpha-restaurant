@@ -137,7 +137,7 @@ $$;
 -- add a one schedule day work for an employee
 -- ex SELECT * FROM fn_add_employee_schedule(2, '2024-04-11 08:00:00', '2024-04-12 08:00:00');
 CREATE OR REPLACE FUNCTION fn_add_employee_schedule(
-	fn_employee_id INT ,
+	fn_employee_id INT ,	
 	fn_shift_start_time TIMESTAMPTZ,
 	fn_shift_end_time TIMESTAMPTZ
 )
@@ -204,19 +204,18 @@ BEGIN
 
     IF current_schedule_id IS NULL THEN
         RAISE EXCEPTION 'No scheduled shift for today.';
-        RETURN;
     END IF;
 
     -- Check if the current time is within 4 hours from the start shift time
     IF CURRENT_TIMESTAMP > shift_start + INTERVAL '4 hours' THEN
         RAISE EXCEPTION 'Check-in time has expired. You can only check-in within 4 hours from the start of your shift.';
-        RETURN;
+        
     END IF;
 
     -- Check if already checked in
     IF EXISTS (SELECT 1 FROM employee_attendance WHERE schedule_id = current_schedule_id AND employee_id = pr_employee_id) THEN
         RAISE EXCEPTION 'Already checked in for today.';
-        RETURN;
+        
     END IF;
 
     -- Insert check-in record
@@ -249,19 +248,19 @@ BEGIN
 
     IF current_schedule_id IS NULL THEN
         RAISE EXCEPTION 'No scheduled shift for today.';
-        RETURN;
+        
     END IF;
 
     -- Check if already checked in
     IF NOT EXISTS (SELECT 1 FROM employee_attendance WHERE schedule_id = current_schedule_id AND employee_id = pr_employee_id) THEN
         RAISE EXCEPTION 'Not checked in for today.';
-        RETURN;
+        
     END IF;
 
     -- Check if the current time is before 4 hours from the end shift time or after 8 hours from the start shift time
     IF CURRENT_TIMESTAMP > shift_end - INTERVAL '4 hours' AND CURRENT_TIMESTAMP < shift_start + INTERVAL '8 hours' THEN
         RAISE EXCEPTION 'Check-out is only allowed before 4 hours from the end of your shift or after 8 hours from the start of your shift.';
-        RETURN;
+        
     END IF;
 
     -- Update check-out time

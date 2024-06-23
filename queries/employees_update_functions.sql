@@ -34,10 +34,19 @@ BEGIN
 		IF fn_changer_id IN (SELECT employee_id FROM employees_position 
 							 WHERE position_id IN (SELECT position_id FROM positions
 							WHERE position_name = 'hr' OR position_name = 'operation manager')) THEN
-			SELECT position_id INTO fn_previous_position_id FROM employees_position WHERE fn_employee_id = employee_id;
-			UPDATE employees_position
-			SET position_id = fn_new_position
-			WHERE employee_id = fn_employee_id;
+			-- Check if the employee already has a position
+			SELECT position_id INTO fn_previous_position_id FROM employees_position WHERE employee_id = fn_employee_id;
+
+			IF fn_previous_position_id IS NULL THEN
+				-- Insert new position if the employee does not have one
+				INSERT INTO employees_position (employee_id, position_id)
+				VALUES (fn_employee_id, fn_new_position);
+			ELSE
+				-- Update position if the employee already has one
+				UPDATE employees_position
+				SET position_id = fn_new_position
+				WHERE employee_id = fn_employee_id;
+			END IF;
 			
 
 			INSERT INTO positions_changes(employee_id, position_changer_id, previous_position, new_position, position_change_type)
@@ -128,10 +137,19 @@ BEGIN
             FROM branches_staff
             WHERE employee_id = fn_employee_id;
             
-            -- Update the branch ID
-            UPDATE branches_staff
-            SET branch_id = fn_new_branch_id
-            WHERE employee_id = fn_employee_id;
+            IF fn_old_branch_id IS NOT NULL THEN
+                -- Update the branch ID
+                UPDATE branches_staff
+                SET branch_id = fn_new_branch_id
+                WHERE employee_id = fn_employee_id;
+            ELSE
+                -- Add the employee to the new branch staff
+                INSERT INTO branches_staff (employee_id, branch_id)
+                VALUES (fn_employee_id, fn_new_branch_id);
+                
+                -- Set the old branch ID to NULL as the employee was not previously assigned
+                fn_old_branch_id := NULL;
+            END IF;
             
             -- Insert into employees_transfers
             INSERT INTO employees_transfers(
@@ -160,7 +178,6 @@ BEGIN
     END IF;
 END;
 $$;
-
 CREATE OR REPLACE FUNCTION fn_change_salary(
     fn_employee_id INT,
     fn_changer_id INT,
@@ -178,7 +195,7 @@ BEGIN
 
     IF FOUND THEN
         IF fn_current_salary <> fn_new_salary THEN
-			IF fn_position_changer_id IN (SELECT employee_id FROM employees_position 
+			IF fn_changer_id IN (SELECT employee_id FROM employees_position 
 							 WHERE position_id IN (SELECT position_id FROM positions
 							WHERE position_name = 'hr' OR position_name = 'operation manager')) THEN
 
@@ -221,11 +238,19 @@ BEGIN
 		IF fn_position_changer_id IN (SELECT employee_id FROM employees_position 
 							 WHERE position_id IN (SELECT position_id FROM positions
 							WHERE position_name = 'hr' OR position_name = 'operation manager')) THEN
-			SELECT position_id INTO fn_previous_position_id FROM employees_position WHERE fn_employee_id = employee_id;
-			UPDATE employees_position
-			SET position_id = fn_new_position
-			WHERE employee_id = fn_employee_id;
+			-- Check if the employee already has a position
+			SELECT position_id INTO fn_previous_position_id FROM employees_position WHERE employee_id = fn_employee_id;
 
+			IF fn_previous_position_id IS NULL THEN
+				-- Insert new position if the employee does not have one
+				INSERT INTO employees_position (employee_id, position_id)
+				VALUES (fn_employee_id, fn_new_position);
+			ELSE
+				-- Update position if the employee already has one
+				UPDATE employees_position
+				SET position_id = fn_new_position
+				WHERE employee_id = fn_employee_id;
+			END IF;
 
 			INSERT INTO positions_changes(employee_id, position_changer_id, previous_position, new_position, position_change_type)
 			VALUES (fn_employee_id, fn_position_changer_id, fn_previous_position_id, fn_new_position, fn_position_change_type);
@@ -257,5 +282,39 @@ BEGIN
 	ELSE
 		RAISE EXCEPTION 'employee not found';
 	END IF;
+END;
+$$;
+
+
+
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE change_employee_password(
+    p_employee_id INT,
+    p_new_password VARCHAR(60)
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    -- Check if the employee exists
+    IF NOT EXISTS (
+        SELECT 1
+        FROM employees_accounts
+        WHERE employee_id = p_employee_id
+    ) THEN
+        RAISE EXCEPTION 'Employee not found for employee_id %', p_employee_id;
+    END IF;
+
+    -- Update the employee password
+    UPDATE employees_accounts
+    SET employee_password = p_new_password
+    WHERE employee_id = p_employee_id;
+
+    -- Raise a notice for successful update
+    RAISE NOTICE 'Employee password updated successfully for employee_id %', p_employee_id;
+
 END;
 $$;

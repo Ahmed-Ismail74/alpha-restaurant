@@ -43,7 +43,8 @@ $$
 BEGIN 
 	RETURN QUERY
 		SELECT * FROM vw_positions_changes
-		WHERE vw_positions_changes.employee_id = fn_employee_id;
+		WHERE vw_positions_changes.employee_id = fn_employee_id
+		ORDER BY change_date DESC;
 END;
 $$;
 
@@ -283,3 +284,45 @@ BEGIN
 	END IF;
 END;
 $$;
+
+
+
+
+
+
+
+DROP FUNCTION fn_get_transfers;
+CREATE OR REPLACE FUNCTION fn_get_employees_transfers(
+    p_employee_id INT DEFAULT NULL,
+    p_transfer_made_by INT DEFAULT NULL,
+    p_old_branch_id INT DEFAULT NULL,
+    p_new_branch_id INT DEFAULT NULL
+)
+RETURNS TABLE(
+    transfer_id INT,
+    employee_id INT,
+    old_branch_id INT,
+    new_branch_id INT,
+    transfer_made_by INT,
+    transfer_date TIMESTAMPTZ,
+    transfer_reason VARCHAR(250)
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        tr.transfer_id,
+        tr.employee_id,
+        tr.old_branch_id,
+        tr.new_branch_id,
+        tr.transfer_made_by,
+        tr.transfer_date,
+        tr.transfer_reason
+    FROM employees_transfers tr
+    WHERE 
+        (p_employee_id IS NULL OR tr.employee_id = p_employee_id) AND
+        (p_transfer_made_by IS NULL OR tr.transfer_made_by = p_transfer_made_by) AND
+        (p_old_branch_id IS NULL OR tr.old_branch_id = p_old_branch_id) AND
+        (p_new_branch_id IS NULL OR tr.new_branch_id = p_new_branch_id)
+    ORDER BY tr.transfer_date DESC;
+END;
+$$ LANGUAGE plpgsql;

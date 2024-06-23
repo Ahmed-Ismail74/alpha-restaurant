@@ -54,8 +54,8 @@ SELECT employees.employee_id, (employees.employee_first_name || ' ' || employees
 FROM employees
 LEFT JOIN employees_position ON employees_position.employee_id = employees.employee_id
 INNER JOIN positions_changes ON positions_changes.employee_id = employees.employee_id
-LEFT JOIN positions new_pos ON new_pos.position_id = positions_changes.previous_position
-LEFT JOIN positions prev_pos ON prev_pos.position_id = positions_changes.new_position
+LEFT JOIN positions new_pos ON new_pos.position_id = positions_changes.new_position
+LEFT JOIN positions prev_pos ON prev_pos.position_id = positions_changes.previous_position
 LEFT JOIN employees emp_changer ON positions_changes.position_changer_id = emp_changer.employee_id
 ;
 
