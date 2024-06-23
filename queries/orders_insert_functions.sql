@@ -594,4 +594,3 @@ $$;
 --     END IF;
 -- END;
 -- $$;
-SELECT * FROM delivered_orders;

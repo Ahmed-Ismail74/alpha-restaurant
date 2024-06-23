@@ -122,4 +122,66 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION fn_get_order_items_by_section(
+    f_section_id INT,
+    f_branch_id INT,
+    f_optional_status order_status_type DEFAULT NULL
+) RETURNS TABLE (
+    fn_order_id INT,
+    fn_customer_id INT,
+    fn_item_id INT,
+    fn_section_id INT,
+    fn_item_status order_status_type,
+    fn_order_date TIMESTAMPTZ,
+    fn_order_type order_type,
+    fn_virtual_room BOOLEAN,
+    fn_quantity SMALLINT,
+    fn_quote_price NUMERIC(6,2)
+) LANGUAGE plpgsql
+AS $$
+BEGIN
+    -- Check if there are any matching orders
+    IF NOT EXISTS (
+        SELECT 1
+        FROM order_items_sections
+        WHERE section_id = f_section_id
+        AND (f_optional_status IS NULL OR item_status = f_optional_status)
+    ) THEN
+        RAISE EXCEPTION 'No orders found for section_id % with status %', f_section_id, f_optional_status;
+    END IF;
+    
+    RETURN QUERY
+    SELECT
+        sec.order_id,
+        sec.customer_id,
+        sec.item_id,
+        sec.section_id,
+        sec.item_status,
+        
+        ord.order_date,
+        ord.order_type,
+        ord.virtual_room,
+        CASE 
+            WHEN ord.virtual_room THEN voi.quantity
+            ELSE nvoi.quantity
+        END AS fn_quantity,
+        CASE 
+            WHEN ord.virtual_room THEN voi.quote_price
+            ELSE nvoi.quote_price
+        END AS fn_quote_price
+    FROM
+        order_items_sections sec
+    JOIN orders ord ON sec.order_id = ord.order_id AND ord.branch_id = f_branch_id
+    LEFT JOIN virtual_orders_items voi ON sec.order_id = voi.order_id AND ord.virtual_room = true AND sec.item_id = voi.item_id
+    LEFT JOIN non_virtual_orders_items nvoi ON sec.order_id = nvoi.order_id AND ord.virtual_room = false AND sec.item_id = nvoi.item_id
+    WHERE
+        sec.section_id = f_section_id
+        AND (f_optional_status IS NULL OR sec.item_status = f_optional_status)
+		
+	ORDER BY ord.order_id DESC;
+END;
+$$;
+
+
+
 

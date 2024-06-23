@@ -41,3 +41,45 @@ BEGIN
     END IF;
 END;
 $$;
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE pr_change_order_item_status(
+    p_order_id INT,
+    p_customer_id INT,
+    p_item_id INT,
+    p_new_status order_status_type
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    -- Check if the order item exists
+    IF NOT EXISTS (
+        SELECT 1
+        FROM order_items_sections
+        WHERE order_id = p_order_id
+        AND customer_id = p_customer_id
+        AND item_id = p_item_id
+    ) THEN
+        RAISE EXCEPTION 'Order item not found for order_id %, customer_id %, item_id %', p_order_id, p_customer_id, p_item_id;
+    END IF;
+
+    -- Update the item status
+    UPDATE order_items_sections
+    SET item_status = p_new_status
+    WHERE order_id = p_order_id
+    AND customer_id = p_customer_id
+    AND item_id = p_item_id;
+
+    -- Raise a notice for successful update
+    RAISE NOTICE 'Item status updated successfully for order_id %, customer_id %, item_id %', p_order_id, p_customer_id, p_item_id;
+
+END;
+$$;
