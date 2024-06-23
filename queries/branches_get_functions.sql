@@ -378,9 +378,7 @@ BEGIN
 END;
 $$;
 
-
-
-CREATE OR REPLACE FUNCTION compare_branches()
+CREATE OR REPLACE FUNCTION compare_branches(days_input INT DEFAULT NULL)
 RETURNS TABLE(
     branch_id INT,
     branch_name VARCHAR(35),
@@ -398,12 +396,14 @@ BEGIN
         COUNT(o.order_id) AS total_orders
     FROM branches b
     LEFT JOIN orders o ON o.branch_id = b.branch_id
+    WHERE 
+        days_input IS NULL OR o.order_date >= CURRENT_DATE - INTERVAL '1 day' * days_input
     GROUP BY b.branch_id, b.branch_name
     ORDER BY total_sales DESC;
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION get_branch_performance(fn_branch_id INT)
+CREATE OR REPLACE FUNCTION get_branch_performance(fn_branch_id INT, days_input INT DEFAULT NULL)
 RETURNS TABLE(
     sales_date DATE,
     total_sales NUMERIC,
@@ -417,15 +417,14 @@ BEGIN
         COUNT(o.order_id) AS total_orders
     FROM orders o
     WHERE o.branch_id = fn_branch_id
+    AND (days_input IS NULL OR o.order_date >= CURRENT_DATE - INTERVAL '1 day' * days_input)
     GROUP BY sales_date
-    ORDER BY sales_date DESC
-    LIMIT 30;
+    ORDER BY sales_date DESC;
 END;
 $$ LANGUAGE plpgsql;
 
 
-
-CREATE OR REPLACE FUNCTION get_overall_performance()
+CREATE OR REPLACE FUNCTION get_overall_performance(days_input INT DEFAULT NULL)
 RETURNS TABLE(
     sales_date DATE,
     total_sales NUMERIC,
@@ -438,31 +437,232 @@ BEGIN
         COALESCE(SUM(o.order_total_price), 0) AS total_sales,
         COUNT(o.order_id) AS total_orders
     FROM orders o
+    WHERE 
+        days_input IS NULL OR o.order_date >= CURRENT_DATE - INTERVAL '1 day' * days_input
     GROUP BY sales_date
-    ORDER BY sales_date DESC
-    LIMIT 30;
+    ORDER BY sales_date DESC;
 END;
 $$ LANGUAGE plpgsql;
 
 
-CREATE OR REPLACE FUNCTION get_section_overview(fn_section_id INT)
+CREATE OR REPLACE FUNCTION get_section_overview(
+    section_id_input INT DEFAULT NULL,
+    days_input INT DEFAULT NULL
+)
 RETURNS TABLE(
-    total_sales NUMERIC,
+    section_id INT,
+    section_name VARCHAR(35),
     total_orders BIGINT,
-    num_employees BIGINT
+    total_items_ordered BIGINT,
+    average_section_rating NUMERIC(3, 2)
 ) AS $$
 BEGIN
-    RETURN QUERY 
+    RETURN QUERY
     SELECT 
-        COALESCE(SUM(o.order_total_price), 0) AS total_sales,
-        COUNT(o.order_id) AS total_orders,
-        COUNT(DISTINCT e.employee_id) AS num_employees
-    FROM orders o
-    JOIN branches b ON o.branch_id = b.branch_id
-    JOIN branch_sections bs ON b.branch_id = bs.branch_id
-    JOIN branches_staff eb ON eb.branch_id = b.branch_id
-    JOIN employees e ON e.employee_id = eb.employee_id
-    WHERE bs.section_id = fn_section_id;
+        s.section_id,
+        s.section_name,
+        COUNT(DISTINCT COALESCE(voi.order_id, nvoi.order_id)) AS total_orders,
+        COUNT(COALESCE(voi.item_id, nvoi.item_id)) AS total_items_ordered,
+        COALESCE(AVG(ar.average_rating), 0) AS average_section_rating
+    FROM 
+        sections s
+        LEFT JOIN categories c ON s.section_id = c.section_id
+        LEFT JOIN menu_items mi ON c.category_id = mi.category_id
+        LEFT JOIN virtual_orders_items voi ON mi.item_id = voi.item_id
+        LEFT JOIN non_virtual_orders_items nvoi ON mi.item_id = nvoi.item_id
+        LEFT JOIN average_ratings ar ON mi.item_id = ar.item_id
+        LEFT JOIN orders o ON COALESCE(voi.order_id, nvoi.order_id) = o.order_id
+    WHERE 
+        (section_id_input IS NULL OR s.section_id = section_id_input) AND
+        (days_input IS NULL OR o.order_date >= CURRENT_DATE - INTERVAL '1 day' * days_input)
+    GROUP BY 
+        s.section_id, s.section_name
+    ORDER BY 
+        s.section_id;
 END;
 $$ LANGUAGE plpgsql;
 
+
+
+
+CREATE OR REPLACE FUNCTION get_branch_location_coordinates(p_branch_id INT)
+RETURNS POINT AS $$
+DECLARE
+    v_location_coordinates POINT;
+BEGIN
+    -- Retrieve the location coordinates of the branch
+    SELECT location_coordinates
+    INTO v_location_coordinates
+    FROM branches
+    WHERE branch_id = p_branch_id;
+    
+    -- Check if the branch exists
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Branch not found for branch_id %', p_branch_id;
+    END IF;
+    
+    -- Return the location coordinates
+    RETURN v_location_coordinates;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE FUNCTION fn_get_employees_data(
+    f_branch_id INT DEFAULT NULL,
+    f_optional_status employee_status_type DEFAULT NULL
+) RETURNS TABLE (
+    fn_employee_id INT,
+    fn_employee_first_name VARCHAR,
+    fn_employee_last_name VARCHAR,
+    fn_employee_ssn CHAR(14),
+    fn_employee_status employee_status_type,
+    fn_employee_gender sex_type,
+    fn_employee_date_hired timestamptz,
+    fn_position_name varchar(25),
+    fn_role  roles_type,
+    fn_section_name VARCHAR(35),
+
+    fn_branch_id INT
+) LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        e.employee_id,
+        e.employee_first_name,
+        e.employee_last_name,
+        e.employee_ssn,
+        e.employee_status,
+        e.employee_gender,
+        e.employee_date_hired,
+        pos.position_name,
+        pos.emp_role,
+        sec.section_name,
+
+        bs.branch_id
+    FROM
+        employees e
+        LEFT JOIN branches_staff bs ON e.employee_id = bs.employee_id
+        LEFT JOIN employees_position e_p ON e.employee_id = e_p.employee_id
+        LEFT JOIN positions pos ON e_p.position_id = pos.position_id
+        LEFT JOIN sections sec ON bs.section_id = sec.section_id
+    
+    WHERE
+        (f_branch_id IS NULL OR bs.branch_id = f_branch_id)
+        AND (f_optional_status IS NULL OR e.employee_status = f_optional_status);
+END;
+$$;
+
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE FUNCTION fn_get_branches(
+    f_branch_id INT DEFAULT NULL
+) RETURNS TABLE (
+    fn_branch_id INT,
+    fn_branch_name VARCHAR,
+    fn_branch_address VARCHAR,
+    fn_branch_phone VARCHAR,
+    fn_branch_created_date TIMESTAMP,
+    fn_location_coordinates POINT,
+    fn_coverage SMALLINT,
+    fn_manager_name TEXT,
+    fn_manager_id INT,
+    fn_branch_tables BIGINT
+) LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        b.branch_id,
+        b.branch_name,
+        b.branch_address,
+        b.branch_phone,
+        b.branch_created_date,
+        b.location_coordinates,
+        b.coverage,
+        (emp.employee_first_name || ' ' || emp.employee_last_name) AS manager_name,
+        mang.manager_id,
+        COUNT(tab.table_id) AS tables_number
+    FROM
+        branches b
+        LEFT JOIN branches_managers mang ON b.branch_id = mang.branch_id
+        LEFT JOIN employees emp ON mang.manager_id = emp.employee_id
+        LEFT JOIN branch_tables tab ON tab.branch_id = b.branch_id
+    WHERE
+        (f_branch_id IS NULL OR b.branch_id = f_branch_id)
+    GROUP BY
+        b.branch_id, b.branch_name, b.branch_address, b.branch_phone, b.branch_created_date, b.location_coordinates::TEXT, b.coverage, emp.employee_first_name, emp.employee_last_name, mang.manager_id;
+END;
+$$;
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE FUNCTION fn_get_sales(
+    f_branch_id INT DEFAULT NULL,
+    f_item_id INT DEFAULT NULL,
+    f_start_date TIMESTAMPTZ DEFAULT NULL,
+    f_end_date TIMESTAMPTZ DEFAULT NULL
+) RETURNS TABLE (
+    fn_branch_id INT,
+    fn_branch_name VARCHAR,
+    fn_item_id INT,
+    fn_item_name VARCHAR,
+    fn_total_sales NUMERIC,
+    fn_sales_count BIGINT
+) LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        b.branch_id,
+        b.branch_name,
+        mi.item_id,
+        mi.item_name,
+        SUM(oi.quantity * oi.quote_price) AS total_sales,
+        COUNT(oi.item_id) AS sales_count
+    FROM
+        branches b
+        JOIN orders o ON b.branch_id = o.branch_id
+        JOIN non_virtual_orders_items oi ON o.order_id = oi.order_id
+        JOIN menu_items mi ON oi.item_id = mi.item_id
+    WHERE
+        (f_branch_id IS NULL OR b.branch_id = f_branch_id)
+        AND (f_item_id IS NULL OR mi.item_id = f_item_id)
+        AND (f_start_date IS NULL OR o.order_date >= f_start_date)
+        AND (f_end_date IS NULL OR o.order_date <= f_end_date)
+    GROUP BY
+        b.branch_id, b.branch_name, mi.item_id, mi.item_name;
+END;
+$$;

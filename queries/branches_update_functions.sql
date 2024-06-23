@@ -74,3 +74,121 @@ END;
 $$;
 
 
+
+
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE pr_change_branch_manager(
+    fn_branch_id INT,
+    fn_new_manager_id INT,
+    fn_position_changer_id INT
+)
+LANGUAGE PLPGSQL
+AS $$
+DECLARE
+    fn_previous_position_id INT;
+    branch_manager_position_id INT;
+BEGIN
+    -- Get the position_id for 'branch manager'
+    SELECT position_id INTO branch_manager_position_id 
+    FROM positions 
+    WHERE position_name = 'branch manager';
+
+    -- Check if the branch exists
+    IF EXISTS(SELECT 1 FROM branches WHERE branch_id = fn_branch_id) THEN
+
+        -- Check if the position changer has the correct permissions
+        IF fn_position_changer_id IN (
+            SELECT employee_id FROM employees_position 
+            WHERE position_id IN (
+                SELECT position_id FROM positions
+                WHERE position_name IN ('hr', 'operation manager')
+            )
+        ) THEN
+
+            -- Get the current position of the new manager
+            SELECT position_id INTO fn_previous_position_id 
+            FROM employees_position 
+            WHERE employee_id = fn_new_manager_id;
+
+            -- If the new manager does not have the 'branch manager' position, promote them
+            IF fn_previous_position_id != branch_manager_position_id THEN
+                INSERT INTO employees_position (employee_id, position_id)
+                VALUES (fn_new_manager_id, branch_manager_position_id)
+                ON CONFLICT (employee_id, position_id) DO UPDATE
+                SET position_id = EXCLUDED.position_id;
+                
+                -- Insert the change into positions_changes table
+                INSERT INTO positions_changes(employee_id, position_changer_id, previous_position, new_position, position_change_type)
+                VALUES (fn_new_manager_id, fn_position_changer_id, fn_previous_position_id, branch_manager_position_id, 'promot');
+            END IF;
+
+            -- Update the branch manager
+            UPDATE branches_managers
+            SET manager_id = fn_new_manager_id
+            WHERE branch_id = fn_branch_id;
+
+            RAISE NOTICE 'Branch manager changed';
+        ELSE
+            RAISE EXCEPTION 'Permission denied';
+        END IF;
+    ELSE
+        RAISE EXCEPTION 'Branch does not exist';
+    END IF;
+END;
+$$;
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE pr_change_section_manager(
+    fn_branch_id INT,
+    fn_section_id INT,
+    fn_new_manager_id INT,
+    fn_position_changer_id INT
+)
+LANGUAGE PLPGSQL
+AS $$
+DECLARE
+    fn_previous_position_id INT;
+BEGIN
+    -- Check if the branch and section exist
+    IF EXISTS(SELECT 1 FROM branch_sections WHERE branch_id = fn_branch_id AND section_id = fn_section_id) THEN
+
+        -- Check if the position changer has the correct permissions
+        IF fn_position_changer_id IN (
+            SELECT employee_id FROM employees_position 
+            WHERE position_id IN (
+                SELECT position_id FROM positions
+                WHERE position_name IN ('hr', 'operation manager')
+            )
+        ) THEN
+
+            -- Get the current position of the new manager
+            SELECT position_id INTO fn_previous_position_id 
+            FROM employees_position 
+            WHERE employee_id = fn_new_manager_id;
+
+            -- Update the section manager
+            UPDATE branch_sections
+            SET manager_id = fn_new_manager_id
+            WHERE branch_id = fn_branch_id AND section_id = fn_section_id;
+
+            RAISE NOTICE 'Section manager changed';
+        ELSE
+            RAISE EXCEPTION 'Permission denied';
+        END IF;
+    ELSE
+        RAISE EXCEPTION 'Branch or section does not exist';
+    END IF;
+END;
+$$;
+
