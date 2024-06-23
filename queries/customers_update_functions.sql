@@ -77,3 +77,38 @@ BEGIN
 	END IF;
 END;
 $$;
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE change_customer_password(
+    p_customer_id INT,
+    p_new_password VARCHAR(60)
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    -- Check if the customer account exists
+    IF NOT EXISTS (
+        SELECT 1
+        FROM customers_accounts
+        WHERE customer_id = p_customer_id
+    ) THEN
+        RAISE EXCEPTION 'Customer not found for customer_id %', p_customer_id;
+    END IF;
+
+    -- Update the customer password
+    UPDATE customers_accounts
+    SET customer_password = p_new_password
+    WHERE customer_id = p_customer_id;
+
+    -- Raise a notice for successful update
+    RAISE NOTICE 'Customer password updated successfully for customer_id %', p_customer_id;
+
+END;
+$$;
