@@ -123,63 +123,74 @@ $$
 DECLARE
     fn_phone_id INT;
 BEGIN
-    PERFORM 1 FROM customers_accounts
+    PERFORM 1 FROM customers
     WHERE customer_id = fn_cust_id;
     IF FOUND THEN
-        RAISE EXCEPTION
-        USING MESSAGE = 'Customer already have an account';
-    ELSE
-        UPDATE customers
-        SET
-            customer_first_name = fn_cust_first_name,
-            customer_last_name = fn_cust_last_name,
-            customer_gender = fn_cust_gender,
-            customer_birthdate = fn_cust_birthdate
-        WHERE customer_id = fn_cust_id;
 
-
-        SELECT customer_phone_id INTO fn_phone_id
-        FROM customers_phones_list
-        WHERE 
-            customer_phone = fn_cust_phone
-            AND customer_id = fn_cust_id;
-        
-        INSERT INTO customers_accounts(
-        customer_id,
-        customer_phone_id,
-        customer_password,
-        picture_path
-        ) VALUES(
-            fn_cust_id,
-            fn_phone_id,
-            fn_cust_password,
-            fn_picture_path
-        );
-
-        PERFORM 1 FROM customers_addresses_list 
+        PERFORM 1 FROM customers_accounts
         WHERE customer_id = fn_cust_id;
         IF FOUND THEN
-            UPDATE customers_addresses_list
-            SET
-                customer_address = fn_cust_address,
-                customer_city = fn_cust_city,
-                location_coordinates = fn_location_coordinates
-            WHERE customer_id = fn_cust_id;
+            RAISE EXCEPTION
+            USING MESSAGE = 'Customer already have an account';
         ELSE
-            INSERT INTO customers_addresses_list(
+            UPDATE customers
+            SET
+                customer_first_name = fn_cust_first_name,
+                customer_last_name = fn_cust_last_name,
+                customer_gender = fn_cust_gender,
+                customer_birthdate = fn_cust_birthdate
+            WHERE customer_id = fn_cust_id;
+
+            SELECT customer_phone_id INTO fn_phone_id
+            FROM customers_phones_list 
+            WHERE 
+                customer_phone = fn_cust_phone
+                AND customer_id = fn_cust_id;
+            
+
+            IF fn_phone_id IS NOT NULL THEN
+                INSERT INTO customers_accounts(
                 customer_id,
-                customer_address,
-                customer_city,
-                location_coordinates
-            ) VALUES(
-                fn_cust_id,
-                fn_cust_address,
-                fn_cust_city,
-                fn_location_coordinates
-            );
-            RAISE NOTICE
-            USING MESSAGE = 'Account created';
+                customer_phone_id,
+                customer_password,
+                picture_path
+                ) VALUES(
+                    fn_cust_id,
+                    fn_phone_id,
+                    fn_cust_password,
+                    fn_picture_path
+                );
+            ELSE
+                RAISE EXCEPTION 'Phone NOT FOUND';
+            END IF;
+
+            PERFORM 1 FROM customers_addresses_list 
+            WHERE customer_id = fn_cust_id;
+            IF FOUND THEN
+                UPDATE customers_addresses_list
+                SET
+                    customer_address = fn_cust_address,
+                    customer_city = fn_cust_city,
+                    location_coordinates = fn_location_coordinates
+                WHERE customer_id = fn_cust_id;
+            ELSE
+                INSERT INTO customers_addresses_list(
+                    customer_id,
+                    customer_address,
+                    customer_city,
+                    location_coordinates
+                ) VALUES(
+                    fn_cust_id,
+                    fn_cust_address,
+                    fn_cust_city,
+                    fn_location_coordinates
+                );
+                RAISE NOTICE
+                USING MESSAGE = 'Account created';
+            END IF;
         END IF;
+    ELSE
+        RAISE EXCEPTION 'Customer NOT FOUND';
     END IF;
 END;
 $$;
@@ -310,14 +321,20 @@ BEGIN
     IF NOT FOUND THEN
         RAISE EXCEPTION 'Customer not exist';
     ELSE
-        INSERT INTO customers_phones_list(
-            customer_id ,
-            customer_phone
-        ) VALUES(
-            pr_cust_id ,
-            pr_cust_phone
-        );
-        RAISE NOTICE 'Phone added successfully';
+        PERFORM 1 FROM customers_phones_list
+        WHERE customer_id = pr_cust_id AND customer_phone = pr_cust_phone;
+        IF FOUND THEN
+            RAISE EXCEPTION 'You are already added phone before';
+        ELSE
+            INSERT INTO customers_phones_list(
+                customer_id ,
+                customer_phone
+            ) VALUES(
+                pr_cust_id ,
+                pr_cust_phone
+            );
+            RAISE NOTICE 'Phone added successfully';
+        END IF;
     END IF;
 END;
 $$;

@@ -85,7 +85,7 @@ $$;
 
 
 
-
+DROP PROCEDURE change_customer_password;
 CREATE OR REPLACE PROCEDURE change_customer_password(
     p_customer_id INT,
     p_new_password VARCHAR(60)
@@ -109,6 +109,38 @@ BEGIN
 
     -- Raise a notice for successful update
     RAISE NOTICE 'Customer password updated successfully for customer_id %', p_customer_id;
+
+END;
+$$;
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE change_customer_picture(
+    p_customer_id INT,
+    p_picture_path VARCHAR(255)
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    -- Check if the customer exists
+    PERFORM 1 FROM customers_accounts WHERE customer_id = p_customer_id;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Customer not found for customer_id %', p_customer_id;
+    END IF;
+
+    -- Update the customer picture
+    UPDATE customers_accounts
+    SET picture_path = p_picture_path
+    WHERE customer_id = p_customer_id;
+
+    -- Raise a notice for successful update
+    RAISE NOTICE 'Customer Picture updated successfully for customer_id %', p_customer_id;
 
 END;
 $$;

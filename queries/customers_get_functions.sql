@@ -154,7 +154,8 @@ CREATE OR REPLACE FUNCTION fn_get_friend_requests(
 )
 RETURNS TABLE(
     id INT,
-    cust_name TEXT 
+    cust_name TEXT,
+    request_date TIMESTAMP
 )
 LANGUAGE PLPGSQL
 AS
@@ -166,13 +167,14 @@ BEGIN
         RAISE EXCEPTION 'Account not found';
     ELSE
         RETURN QUERY
-            SELECT cust.customer_id, (customer_first_name || ' ' || customer_last_name)
+            SELECT cust.customer_id, (customer_first_name || ' ' || customer_last_name), req.request_date
             FROM friends_requests req
             LEFT JOIN customers_accounts acc ON req.sender_account_id = acc.account_id
             LEFT JOIN customers cust ON cust.customer_id = acc.customer_id
             WHERE 
                 req.receiver_account_id = fn_acc_id
-                AND req.friend_request_status = 'pending';
+                AND req.friend_request_status = 'pending'
+            ORDER BY req.request_date;
     END IF;
 END;
 $$;
@@ -258,7 +260,42 @@ BEGIN
             rat.rating
             FROM customers_ratings rat
 			WHERE rat.customer_id = fn_customer_id
+            ORDER BY rat.item_id
 			);
 	END IF;
 END;
 $$;
+
+
+
+
+
+
+
+
+
+
+-- SELECT * FROM get_friends_favorite_items(16);
+CREATE OR REPLACE FUNCTION get_friends_favorite_items(f_customer_id INT)
+RETURNS TABLE(item_id INT, friends_list TEXT) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT 
+        cf.item_id,
+        STRING_AGG((c.customer_first_name || ' ' || customer_last_name), ', ') AS friends_list
+    FROM 
+        customers_favorites cf
+    JOIN 
+        friendships f ON cf.customer_id = f.account_id_receiver OR cf.customer_id = f.account_id_sender
+    JOIN 
+        customers_accounts ca ON (ca.account_id = f.account_id_sender AND f.account_id_receiver = f_customer_id)
+                               OR (ca.account_id = f.account_id_receiver AND f.account_id_sender = f_customer_id)
+    JOIN 
+        customers c ON ca.customer_id = c.customer_id
+    WHERE 
+        cf.customer_id != f_customer_id
+    GROUP BY 
+        cf.item_id;
+END;
+$$ LANGUAGE plpgsql;
+
