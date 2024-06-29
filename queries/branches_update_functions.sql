@@ -1,5 +1,4 @@
 -- change price or discount of item in branch menu
--- SELECT * FROM fn_change_item_price(1,1,1, 'discount', 30);
 
 CREATE OR REPLACE PROCEDURE pr_change_item_price(
     fn_item_id INT,
@@ -123,7 +122,7 @@ BEGIN
                 
                 -- Insert the change into positions_changes table
                 INSERT INTO positions_changes(employee_id, position_changer_id, previous_position, new_position, position_change_type)
-                VALUES (fn_new_manager_id, fn_position_changer_id, fn_previous_position_id, branch_manager_position_id, 'promot');
+                VALUES (fn_new_manager_id, fn_position_changer_id, fn_previous_position_id, branch_manager_position_id, 'promote');
             END IF;
 
             -- Update the branch manager
@@ -191,4 +190,170 @@ BEGIN
     END IF;
 END;
 $$;
+
+
+
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE pr_change_item_status(
+    fn_item_id INT,
+    fn_branch_id INT,
+    fn_changer INT,
+    fn_change_type menu_item_type
+)
+LANGUAGE PLPGSQL
+AS $$
+DECLARE 
+    fn_previous_value INT;
+BEGIN
+    -- Check if the position changer has the correct permissions
+    IF fn_position_changer_id IN (
+        SELECT employee_id FROM employees_position 
+        WHERE position_id IN (
+            SELECT position_id FROM positions
+            WHERE position_name IN ('hr', 'operation manager', 'branch manager')
+        )) THEN
+            PERFORM 1 FROM branches_menu 
+            WHERE branch_id = fn_branch_id AND item_id = fn_item_id;
+            IF NOT FOUND THEN
+                RAISE EXCEPTION 'item not found in branch menu';
+            ELSE
+                UPDATE branches_menu 
+                SET item_status = fn_change_type
+                WHERE branch_id = fn_branch_id AND item_id = fn_item_id;
+            END IF;
+        ELSE
+            RAISE EXCEPTION 'Permission denied';
+    END IF;
+END;
+$$;
+
+
+
+CREATE OR REPLACE PROCEDURE change_category_picture(
+    p_category_id INT,
+    p_picture_path VARCHAR(255)
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    -- Check if the item exists
+    PERFORM 1 FROM categories WHERE category_id = p_category_id;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Category not found for ID %', p_category_id;
+    END IF;
+
+    -- Update the item picture
+    UPDATE categories
+    SET picture_path = p_picture_path
+    WHERE category_id = p_category_id;
+
+    -- Raise a notice for successful update
+    RAISE NOTICE 'Category Picture updated successfully for ID %', p_category_id;
+
+END;
+$$;
+
+
+
+
+CREATE OR REPLACE PROCEDURE change_item_picture(
+    p_item_id INT,
+    p_picture_path VARCHAR(255)
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    -- Check if the item exists
+    PERFORM 1 FROM menu_items WHERE item_id = p_item_id;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'item not found for p_item_id %', p_item_id;
+    END IF;
+
+    -- Update the item picture
+    UPDATE menu_items
+    SET picture_path = p_picture_path
+    WHERE item_id = p_item_id;
+
+    -- Raise a notice for successful update
+    RAISE NOTICE 'item Picture updated successfully for p_item_id %', p_item_id;
+
+END;
+$$;
+
+
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE change_delivering_order_status(
+    p_order_id INT,
+    p_new_status delivery_status
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    UPDATE delivered_orders
+    SET delivering_status = p_new_status
+    WHERE order_id = p_order_id;
+
+    UPDATE orders
+    SET order_status = 'completed'
+    WHERE order_id = p_order_id;
+    -- Check if the update was successful
+    
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Order ID % does not exist', p_order_id;
+    END IF;
+END;
+$$;
+
+
+
+
+
+CREATE OR REPLACE PROCEDURE reassign_delivery_order_employee(
+    p_order_id INT,
+    p_new_employee_id INT
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    current_employee_id INT;
+BEGIN
+    -- Check if the order exists and get the current employee ID
+    SELECT delivery_employee_id
+    INTO current_employee_id
+    FROM delivered_orders
+    WHERE order_id = p_order_id;
+    
+    -- Raise exception if the order ID does not exist
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Order ID % does not exist', p_order_id;
+    END IF;
+
+    -- Raise exception if the new employee ID is the same as the current one
+    IF current_employee_id = p_new_employee_id THEN
+        RAISE EXCEPTION 'Order ID % is already assigned to employee ID %', p_order_id, p_new_employee_id;
+    END IF;
+
+    -- Update the delivery employee ID for the specified order
+    UPDATE delivered_orders
+    SET delivery_employee_id = p_new_employee_id
+    WHERE order_id = p_order_id;
+    
+    -- Confirm the update
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Failed to update Order ID % with new employee ID %', p_order_id, p_new_employee_id;
+    END IF;
+END;
+$$;
+
+
+
+
 

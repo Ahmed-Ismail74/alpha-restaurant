@@ -20,7 +20,8 @@ AS
         employees.employee_first_name, 
         employees.employee_last_name, 
         br.branch_phone, 
-        br.branch_address;
+        br.branch_address
+    ORDER BY br.branch_id;
 
 --categories details view  
 CREATE OR REPLACE VIEW vw_categories(
@@ -32,8 +33,8 @@ CREATE OR REPLACE VIEW vw_categories(
 AS 
     SELECT categories.category_id,categories.category_name, sections.section_name, categories.category_description
     FROM categories
-    JOIN sections ON sections.section_id = categories.section_id;
-
+    JOIN sections ON sections.section_id = categories.section_id
+    ORDER BY categories.category_id;
 
 
 -- View to show recipes information of all menu items 
@@ -62,7 +63,8 @@ CREATE OR REPLACE VIEW vw_general_menu(
 ) AS
     SELECT item_id, item_name, item_description, preparation_time, category_name
     FROM menu_items menu
-    LEFT JOIN categories cat ON menu.category_id = cat.category_id;
+    LEFT JOIN categories cat ON menu.category_id = cat.category_id
+    ORDER BY item_id;
 
 
 
@@ -79,6 +81,7 @@ CREATE OR REPLACE VIEW vw_branch_price_changes(
     FROM items_price_changes ch
     LEFT JOIN branches br ON br.branch_id = ch.branch_id
     LEFT JOIN employees emp ON emp.employee_id = ch.item_cost_changed_by
-    LEFT JOIN menu_items it ON it.item_id = ch.item_id;
+    LEFT JOIN menu_items it ON it.item_id = ch.item_id
+    ORDER BY br.branch_id;
 
 

@@ -83,13 +83,14 @@ $$;
 CREATE OR REPLACE PROCEDURE pr_add_category(
 	f_section_id INT,
 	f_category_name VARCHAR(35),
-	f_category_description VARCHAR(254)
+	f_category_description VARCHAR(254),
+	f_picture_path varchar(255) DEFAULT NULL
 )
 LANGUAGE PLPGSQL
 AS $$
 BEGIN
-	INSERT INTO categories (section_id, category_name, category_description)
-	VALUES (f_section_id, f_category_name, f_category_description);
+	INSERT INTO categories (section_id, category_name, category_description, picture_path)
+	VALUES (f_section_id, f_category_name, f_category_description, f_picture_path);
 END;
 $$;
 
@@ -191,11 +192,10 @@ $$;
 
 -- FUNCTION to recipes of menu item
 -- SELECT * FROM fn_add_recipes(2, 1, 5, 'optional');
-
 CREATE OR REPLACE PROCEDURE pr_add_recipes(
 	p_item_id INT,
 	p_ingredient_id INT,
-	p_quantity NUMERIC(5, 3) ,
+	p_quantity NUMERIC(8, 3) ,
 	p_recipe_status recipe_type DEFAULT 'required'
 )
 LANGUAGE PLPGSQL
