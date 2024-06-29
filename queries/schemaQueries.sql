@@ -35,7 +35,7 @@
 		employee_email varchar(254) NOT NULL UNIQUE,
 		employee_password varchar(60) NOT NULL,
 		account_created_date TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-		picture_path varchar(255),
+		picture_path varchar(255), 
 
 		PRIMARY KEY (employee_id)
 	);
@@ -148,7 +148,7 @@
 		customer_phone_id INT REFERENCES customers_phones_list ON DELETE RESTRICT ON UPDATE CASCADE NOT NULL,
 		customer_password varchar(60) NOT NULL,
 		account_created_date TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-		picture_path varchar(255)
+		picture_path varchar(255) 
 	);
 
 	CREATE TABLE IF NOT EXISTS  friends_requests(
@@ -185,6 +185,7 @@
 		category_name VARCHAR(35) UNIQUE NOT NULL,
 		category_description VARCHAR(254)
 	);
+	ALTER TABLE categories ADD COLUMN picture_path varchar(255);
 
 	CREATE TABLE IF NOT EXISTS  branches(
 		branch_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
@@ -333,9 +334,10 @@
 		recipe_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 		ingredient_id INT REFERENCES ingredients ON DELETE RESTRICT ON UPDATE CASCADE NOT NULL,
 		item_id INT REFERENCES menu_items ON DELETE RESTRICT ON UPDATE CASCADE NOT NULL,
-		quantity NUMERIC(5, 3) NOT NULL,
+		quantity NUMERIC(8, 3) NOT NULL,
 		recipe_status recipe_type NOT NULL
 	);
+
 	CREATE TABLE IF NOT EXISTS  storages_stock(
 		storage_id INT REFERENCES storages ON DELETE RESTRICT ON UPDATE CASCADE NOT NULL,
 		ingredient_id INT REFERENCES ingredients ON DELETE RESTRICT ON UPDATE CASCADE NOT NULL,
@@ -499,6 +501,7 @@
 		delivery_employee_id INT REFERENCES employees(employee_id) ON DELETE RESTRICT ON UPDATE CASCADE NOT NULL,
 		arrival_date_by_customer timestamptz,
 		arrival_date_by_employee timestamptz,
+		delivering_status delivery_status DEFAULT 'assigned',
 		PRIMARY KEY (order_id)
 	);
 
@@ -594,6 +597,8 @@ EXECUTE FUNCTION update_average_ratings();
 
 
 
+-- UPDATE order_items_sections
+-- SET item_status = 'completed'
 
 
 CREATE TABLE IF NOT EXISTS order_items_sections (

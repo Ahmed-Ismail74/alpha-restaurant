@@ -19,7 +19,9 @@ BEGIN
         RAISE EXCEPTION 'Customer not exist';
     ELSE
         RETURN QUERY
-            SELECT * FROM bookings bo WHERE bo.customer_id = fn_customer_id;
+            SELECT * FROM bookings bo 
+            WHERE bo.customer_id = fn_customer_id
+            ORDER BY booking_date DESC;
     END IF;
 END;
 $$;
@@ -185,3 +187,70 @@ $$;
 
 
 
+
+CREATE OR REPLACE FUNCTION fn_get_order_items_status(
+    f_order_id INT,
+    f_optional_status order_status_type DEFAULT NULL
+) RETURNS TABLE (
+    fn_customer_id INT,
+    fn_item_id INT,
+    fn_section_id INT,
+    fn_item_status order_status_type
+) LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        sec.customer_id,
+        sec.item_id,
+        sec.section_id,
+        sec.item_status
+    FROM
+        order_items_sections sec
+    WHERE
+        sec.order_id = f_order_id
+        AND (f_optional_status IS NULL OR sec.item_status = f_optional_status)
+		
+	ORDER BY sec.item_id;
+END;
+$$;
+
+
+CREATE OR REPLACE FUNCTION fn_get_orders(
+    f_branch_id INT DEFAULT NULL,
+    f_order_type order_type DEFAULT NULL
+) RETURNS TABLE (
+    fn_order_id INT,
+    fn_customer_id INT,
+    fn_branch_id INT,
+    fn_order_date TIMESTAMPTZ,
+    fn_ship_date TIMESTAMPTZ,
+    fn_order_type order_type,
+    fn_order_status order_status_type,
+    fn_order_total_price NUMERIC(10,2),
+    fn_order_customer_discount NUMERIC(4,2),
+    fn_order_payment_method payment_method_type,
+    fn_virtual_room BOOLEAN
+) LANGUAGE plpgsql
+AS $$
+BEGIN
+RETURN QUERY
+    SELECT 
+    order_id ,
+    customer_id ,
+    branch_id ,
+    order_date ,
+    ship_date ,
+    order_type ,
+    order_status ,
+    order_total_price ,
+    order_customer_discount ,
+    order_payment_method ,
+    virtual_room
+    
+    FROM orders
+    
+    WHERE (branch_id = f_branch_id OR f_branch_id IS NULL)
+    AND (order_type = f_order_type OR f_order_type IS NULL);
+END;
+$$;

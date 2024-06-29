@@ -50,3 +50,19 @@ queries/insert data/CSVs/tempCodeRunnerFile.py
 queries/insert data/CSVs/generate employees - Copy.py
 queries/insert data/CSVs/add_employees_script.sql
 queries/insert data/ingredinets.sql
+queries/insert data/CSVs/categories.csv
+queries/insert data/CSVs/generate non v orders every day.py
+queries/insert data/CSVs/extracted/frequent_itemsets_fp.csv
+queries/insert data/CSVs/extracted/rules_lift_fp.csv
+queries/insert data/CSVs/itemset/apriori.py
+queries/insert data/CSVs/extracted/rules_conf_fp.csv
+queries/insert data/CSVs/orders_items.csv
+queries/insert data/CSVs/extracted/one_hot_encoded_orders_items_fp.csv
+queries/insert data/CSVs/itemset/apriori.ipynb
+queries/insert data/CSVs/itemset/FP_Grothi.ipynb
+queries/insert data/CSVs/itemset/fp-growth.py
+queries/insert data/CSVs/itemset/load_into_into_db.py
+queries/insert data/CSVs/itemset/tempCodeRunnerFile.py
+SVGs/LERD.drawio
+queries/insert data/CSVs/generate v orders every day.py
+database design.docx
