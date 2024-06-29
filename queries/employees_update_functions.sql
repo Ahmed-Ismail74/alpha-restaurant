@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION fn_update_employee_salary_position(
+CREATE OR REPLACE PROCEDURE pr_update_employee_salary_position(
 	fn_employee_id int,
 	fn_changer_id int,
 	fn_new_salary int,
@@ -7,7 +7,6 @@ CREATE OR REPLACE FUNCTION fn_update_employee_salary_position(
 	fn_change_reason varchar(255) DEFAULT NULL
 
 )
-RETURNS VARCHAR
 LANGUAGE PLPGSQL
 AS
 $$
@@ -28,7 +27,7 @@ BEGIN
 			WHERE employee_id = fn_employee_id;
 		
 		ELSE 
-			RETURN 'New salary Is same current';
+			RAISE EXCEPTION 'New salary Is same current';
 		END IF;
 		
 		IF fn_changer_id IN (SELECT employee_id FROM employees_position 
@@ -52,13 +51,13 @@ BEGIN
 			INSERT INTO positions_changes(employee_id, position_changer_id, previous_position, new_position, position_change_type)
 			VALUES (fn_employee_id, fn_changer_id, fn_previous_position_id, fn_new_position, fn_position_change_type);
 
-			RETURN 'Employee position and salary changed';
+			RAISE NOTICE 'Employee position and salary changed';
 		ELSE
-			RETURN 'Premission denied';
+			RAISE EXCEPTION 'Premission denied';
 		END IF;
 		
 	ELSE
-        RETURN 'Employee with id % not found', fn_employee_id;
+        RAISE EXCEPTION 'Employee with id % not found', fn_employee_id;
 	END IF;
 END;
 $$;
@@ -178,13 +177,13 @@ BEGIN
     END IF;
 END;
 $$;
-CREATE OR REPLACE FUNCTION fn_change_salary(
+
+CREATE OR REPLACE PROCEDURE pr_change_salary(
     fn_employee_id INT,
     fn_changer_id INT,
     fn_new_salary INT,
     fn_change_reason VARCHAR(255) DEFAULT NULL
 )
-RETURNS VARCHAR
 LANGUAGE PLPGSQL
 AS
 $$
@@ -202,19 +201,19 @@ BEGIN
 				INSERT INTO salary_changes (employee_id, change_made_by, old_salary, change_reason)
 				VALUES (fn_employee_id, fn_changer_id, fn_current_salary, fn_change_reason);
 			ELSE
-				RETURN 'Premission denied';
+				RAISE EXCEPTION 'Premission denied';
 			END IF;
 
             UPDATE employees 
             SET employee_salary = fn_new_salary
             WHERE employee_id = fn_employee_id;
 
-            RETURN 'Salary Changed';
+            RAISE NOTICE 'Salary Changed';
         ELSE 
-            RETURN FORMAT ('New salary is same as the current', fn_employee_id);
+            RAISE EXCEPTION 'New salary is same as the current';
         END IF;
     ELSE
-        RETURN FORMAT ('Employee with id %s not found', fn_employee_id);
+        RAISE EXCEPTION 'Employee not found';
     END IF;
 END;
 $$;
@@ -290,8 +289,6 @@ $$;
 
 
 
-
-
 CREATE OR REPLACE PROCEDURE change_employee_password(
     p_employee_id INT,
     p_new_password VARCHAR(60)
@@ -315,6 +312,33 @@ BEGIN
 
     -- Raise a notice for successful update
     RAISE NOTICE 'Employee password updated successfully for employee_id %', p_employee_id;
+
+END;
+$$;
+
+
+
+
+CREATE OR REPLACE PROCEDURE change_employee_picture(
+    p_employee_id INT,
+    p_picture_path VARCHAR(255)
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    -- Check if the employee exists
+    PERFORM 1 FROM employees_accounts WHERE employee_id = p_employee_id;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Employee not found for employee_id %', p_employee_id;
+    END IF;
+
+    -- Update the employee picture
+    UPDATE employees_accounts
+    SET picture_path = p_picture_path
+    WHERE employee_id = p_employee_id;
+
+    -- Raise a notice for successful update
+    RAISE NOTICE 'Employee Picture updated successfully for employee_id %', p_employee_id;
 
 END;
 $$;

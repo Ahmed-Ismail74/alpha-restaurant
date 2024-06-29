@@ -95,7 +95,8 @@ BEGIN
 			WHERE 
 				employee_id = fn_employee_id 
 				AND (employee_schedule.shift_start_time >= fn_date_from OR fn_date_from IS NULL)
-				AND (employee_schedule.shift_start_time <= fn_date_to OR fn_date_to IS NULL); 
+				AND (employee_schedule.shift_start_time <= fn_date_to OR fn_date_to IS NULL)
+				ORDER BY employee_schedule.shift_start_time; 
 	END IF;
 END;
 $$;
@@ -161,7 +162,8 @@ BEGIN
 			WHERE 
 				employee_schedule.employee_id = fn_employee_id 
 				AND (employee_schedule.shift_start_time >= fn_date_from OR fn_date_from IS NULL)
-				AND (employee_schedule.shift_start_time <= fn_date_to OR fn_date_to IS NULL); 
+				AND (employee_schedule.shift_start_time <= fn_date_to OR fn_date_to IS NULL)
+				ORDER BY employee_schedule.shift_start_time; 
 	END IF;
 END;
 $$;
@@ -291,7 +293,6 @@ $$;
 
 
 
-DROP FUNCTION fn_get_transfers;
 CREATE OR REPLACE FUNCTION fn_get_employees_transfers(
     p_employee_id INT DEFAULT NULL,
     p_transfer_made_by INT DEFAULT NULL,
@@ -324,5 +325,94 @@ BEGIN
         (p_old_branch_id IS NULL OR tr.old_branch_id = p_old_branch_id) AND
         (p_new_branch_id IS NULL OR tr.new_branch_id = p_new_branch_id)
     ORDER BY tr.transfer_date DESC;
+END;
+$$ LANGUAGE plpgsql;
+
+
+
+
+
+
+
+
+CREATE OR REPLACE FUNCTION fn_get_employees_data(
+    f_branch_id INT DEFAULT NULL,
+    f_optional_status employee_status_type DEFAULT NULL,
+	f_employee_role roles_type DEFAULT NULL
+) RETURNS TABLE (
+    fn_employee_id INT,
+    fn_employee_first_name VARCHAR,
+    fn_employee_last_name VARCHAR,
+    fn_employee_ssn CHAR(14),
+    fn_employee_status employee_status_type,
+    fn_employee_gender sex_type,
+    fn_employee_date_hired timestamptz,
+    fn_position_name varchar(25),
+    fn_role  roles_type,
+    fn_section_name VARCHAR(35),
+    fn_branch_id INT
+) LANGUAGE plpgsql
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        e.employee_id,
+        e.employee_first_name,
+        e.employee_last_name,
+        e.employee_ssn,
+        e.employee_status,
+        e.employee_gender,
+        e.employee_date_hired,
+        pos.position_name,
+        pos.emp_role,
+        sec.section_name,
+        bs.branch_id
+    FROM
+        employees e
+        LEFT JOIN branches_staff bs ON e.employee_id = bs.employee_id
+        LEFT JOIN employees_position e_p ON e.employee_id = e_p.employee_id
+        LEFT JOIN positions pos ON e_p.position_id = pos.position_id
+        LEFT JOIN sections sec ON bs.section_id = sec.section_id
+    
+    WHERE
+        (f_branch_id IS NULL OR bs.branch_id = f_branch_id)
+        AND (f_optional_status IS NULL OR e.employee_status = f_optional_status)
+        AND (f_employee_role IS NULL OR pos.emp_role = f_employee_role)
+	ORDER BY e.employee_id;
+END;
+$$;
+
+
+
+
+CREATE OR REPLACE FUNCTION get_employee_orders(
+    p_employee_id INT,
+    p_status delivery_status DEFAULT NULL
+)
+RETURNS TABLE(
+    order_id INT,
+    delivery_employee_id INT,
+    arrival_date_by_customer timestamptz,
+    arrival_date_by_employee timestamptz,
+    delivering_status delivery_status
+) AS $$
+BEGIN
+	PERFORM 1 FROM employees WHERE employee_id = p_employee_id;
+	IF NOT FOUND THEN
+		RAISE EXCEPTION 'Employee Not found id: %', p_employee_id;
+	ELSE
+        RETURN QUERY
+        SELECT
+            ord.order_id,
+            ord.delivery_employee_id,
+            ord.arrival_date_by_customer,
+            ord.arrival_date_by_employee,
+            ord.delivering_status
+        FROM
+            delivered_orders ord
+        WHERE
+            ord.delivery_employee_id = p_employee_id
+            AND (ord.delivering_status = p_status OR p_status IS NULL);
+    END IF;
 END;
 $$ LANGUAGE plpgsql;

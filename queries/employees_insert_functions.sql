@@ -82,30 +82,37 @@ $$;
 
 
 -- PROCEDURE to insert data into employees account using id 
+DROP PROCEDURE pr_insert_employee_account;
 CREATE OR REPLACE PROCEDURE pr_insert_employee_account(
     p_employee_id INT,
     p_email varchar(254),
     p_password varchar(512),
-	p_picture_path varchar(255)
+	picture_path varchar(255) DEFAULT NULL
 )
 LANGUAGE PLPGSQL
 AS $$
 BEGIN
-	IF EXISTS (SELECT 1 FROM employees_accounts WHERE employee_email = p_email) THEN
-		RAISE EXCEPTION 'Account existed';
+	PERFORM 1 FROM employees WHERE employee_id = p_employee_id;
+	IF NOT FOUND THEN
+		RAISE EXCEPTION 'Employee Not exist';
 	ELSE
-		INSERT INTO employees_accounts (
-			employee_id,
-			employee_email,
-			employee_password,
-			picture_path
-		) VALUES (
-			p_employee_id,
-			p_email,
-			p_password,
-			p_picture_path
-		);
-		RAISE NOTICE 'Account added';
+		PERFORM 1 FROM employees_accounts WHERE employee_id = p_employee_id;
+		IF FOUND THEN
+			RAISE EXCEPTION 'Account existed';
+		ELSE
+			INSERT INTO employees_accounts (
+				employee_id,
+				employee_email,
+				employee_password,
+				picture_path
+			) VALUES (
+				p_employee_id,
+				p_email,
+				p_password,
+				picture_path
+			);
+			RAISE NOTICE 'Account added';
+		END IF;
 	END IF;
 END;
 $$;
@@ -231,7 +238,6 @@ $$;
 
 
 
-
 CREATE OR REPLACE PROCEDURE check_out_employee(IN pr_employee_id INT)
 LANGUAGE plpgsql
 AS $$
@@ -273,4 +279,45 @@ END;
 $$;
 
 
---Note: add constraints on the time where employee can change attendance
+
+CREATE OR REPLACE PROCEDURE assign_order_to_delivery(
+	pr_order_id INT[],
+	pr_delivery_employee_id INT
+)
+LANGUAGE PLPGSQL
+AS $$
+DECLARE
+    p_order_id INT;
+    existing_employee_id INT;
+BEGIN
+	PERFORM 1 FROM employees WHERE employee_id = pr_delivery_employee_id;
+	IF NOT FOUND THEN
+		RAISE EXCEPTION 'Employee Not found id: %', pr_delivery_employee_id;
+	ELSE
+		FOREACH p_order_id IN ARRAY pr_order_id
+		LOOP
+			BEGIN
+				INSERT INTO delivered_orders (
+					order_id,
+					delivery_employee_id
+				) VALUES (
+					p_order_id,
+					pr_delivery_employee_id
+					);
+			EXCEPTION
+			WHEN unique_violation THEN
+				-- Get the existing employee ID for the conflicting order
+				SELECT delivery_employee_id
+				INTO existing_employee_id
+				FROM delivered_orders ord
+				WHERE ord.order_id = p_order_id;
+				RAISE EXCEPTION 'Order ID % already delivered by employee ID %', p_order_id, existing_employee_id;
+				END;
+		END LOOP;
+	END IF;
+END;
+$$
+
+
+
+TODO: make item recomendations based on main dishes only not extra dishes 
