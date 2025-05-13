@@ -10,7 +10,7 @@ The structure is modular, with each entity (e.g., branches, customers, employees
 
 Below is the Logical Entity-Relationship Diagram (LERD) for the Alpha Restaurant schema:
 
-![LER Diagram](../SVGs/LERD.svg)
+![LER Diagram](SVGs/LERD.svg)
 
 ---
 
@@ -43,17 +43,5 @@ Below is the Logical Entity-Relationship Diagram (LERD) for the Alpha Restaurant
 
 ## 🧩 Folder Structure
 
-alpha-restaurant/
-├── queries/
-│   ├── branches_*.sql
-│   ├── customers_*.sql
-│   ├── employees_*.sql
-│   ├── orders_*.sql
-│   ├── shipment_insert_functions.sql
-│   ├── schemaQueries.sql
-│   ├── dataTypes.sql
-│   └── views.sql
-├── SVGs/
-│   └── LERD.svg
-└── README.md
+<pre lang="markdown"> ``` alpha-restaurant/ ├── queries/ │ ├── branches_*.sql │ ├── customers_*.sql │ ├── employees_*.sql │ ├── orders_*.sql │ ├── shipment_insert_functions.sql │ ├── schemaQueries.sql │ ├── dataTypes.sql │ └── views.sql ├── SVGs/ │ └── LERD.svg └── README.md ``` </pre>
 
